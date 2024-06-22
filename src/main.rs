@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-
+mod basic_enemy;
 
 const USER_SPEED: f32 = 200.0;
 
@@ -14,7 +14,7 @@ enum GameState {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, basic_enemy::BasicEnemyPlugin))
         .init_resource::<Game>()
      
         .init_state::<GameState>()
@@ -30,8 +30,22 @@ struct Cell {
 /// Used to help identify our main camera
 #[derive(Component)]
 struct MainCamera;
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Player;
+
+#[derive(Component, Debug)]
+struct Velocity {
+    x: f32,
+    y: f32
+}
+const VELOCITY_CAP: f32 = 300.;
+
+#[derive(Component, Debug)]
+struct Acceleration {
+    x: f32,
+    y: f32
+}
+const ACC_CAP: f32 = 20.;
 
 #[derive(Component)]
 enum Direction {
@@ -48,11 +62,10 @@ struct Game {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((Camera2dBundle::default(), MainCamera));
-    commands.spawn((SpriteBundle {
-            texture: asset_server.load("spacebg.png"),
-            ..default()
-        }
-    );
+    // commands.spawn(SpriteBundle {
+    //     texture: asset_server.load("spacebg.png"),
+    //     ..default()
+    // });
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("ship.png"),
@@ -60,12 +73,16 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         Player,
+        Velocity {x: 0., y: 0.},
+        Acceleration {x: 0., y: 0.},
     ));
+
+    
 }
 
 fn move_user(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<&mut Transform, With<Player>>,
+    mut query: Query<(&mut Transform), With<Player>>,
     time: Res<Time>,
 ) {
     let mut player_transform = query.single_mut();
@@ -86,27 +103,20 @@ fn move_user(
         y_direction -= 1.0;
     }
 
-    // Calculate the new horizontal paddle position based on player input
     let new_player_position_x =
         player_transform.translation.x + x_direction * USER_SPEED * time.delta_seconds();
     let new_player_position_y =
         player_transform.translation.y + y_direction * USER_SPEED * time.delta_seconds();
 
-    player_transform.translation.x = new_player_position_x
-    //.clamp(left_bound, right_bound)
-    ;
-    player_transform.translation.y = new_player_position_y
-    //.clamp(left_bound, right_bound)
-    ;
+    player_transform.translation.x = new_player_position_x;
+    player_transform.translation.y = new_player_position_y;
 }
 
 fn rotate_user(
     mut player_query: Query<&mut Transform, With<Player>>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-) {
-
-    
+) { 
     let (camera, camera_transform) = q_camera.single();
     let mut player_transform = player_query.single_mut();
     let player_translation = player_transform.translation.xy();
@@ -122,5 +132,4 @@ fn rotate_user(
        },
        None => {},
     }
-
 }
