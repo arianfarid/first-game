@@ -1,7 +1,8 @@
 
 use bevy::{app::{App, Plugin}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{MainCamera, GameState};
+use crate::{MainCamera, GameState, beam::Beam};
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -9,7 +10,8 @@ impl Plugin for PlayerPlugin {
        app
        .add_systems(OnEnter(GameState::Playing), setup)
        .add_systems(Update, move_user)
-       .add_systems(Update, rotate_user);
+       .add_systems(Update, rotate_user)
+       .add_systems(Update, user_fire_beam);
     }
 }
 
@@ -91,10 +93,45 @@ fn rotate_user(
     .map(|ray| ray.origin.truncate());
     match cursor_pos {
        Some(v) => {
-        let to_mouse = (player_translation - v).normalize();
+        let to_mouse = (v - player_translation).normalize();
         let rotate_to_mouse = Quat::from_rotation_arc(Vec3::Y, to_mouse.extend(0.));
         player_transform.rotation = rotate_to_mouse;
        },
        None => {},
+    }
+}
+
+fn user_fire_beam(
+    mut player_query: Query<&mut Transform, With<Player>>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
+    mouse_buttons:Res<ButtonInput<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    let player_transform = player_query.single_mut();
+    let player_location = player_transform.translation;
+    let player_angle = player_transform.rotation;
+
+    // Convert to axis of rotation
+    let axis = (player_angle * Vec3::Y).xy();
+    
+    if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.just_pressed(MouseButton::Left) {
+        let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
+        spawn_transform.translation = player_location;
+        spawn_transform.rotation = player_angle;
+        commands.spawn((
+            SpriteBundle {
+                transform: spawn_transform,
+                texture: asset_server.load("beam_basic.png"),
+                ..default()
+            },
+            //todo: 2 weapons, should be enum w/ params
+            Beam {
+                lifetime: 4.,
+                speed: 500.,
+                direction: Vec2::new(axis.x, axis.y)
+            }
+        ));
     }
 }

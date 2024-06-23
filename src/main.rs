@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 mod basic_enemy;
 mod player;
+pub mod beam;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 pub enum GameState {
@@ -11,7 +12,7 @@ pub enum GameState {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, basic_enemy::BasicEnemyPlugin, player::PlayerPlugin))
+        .add_plugins((DefaultPlugins, basic_enemy::BasicEnemyPlugin, player::PlayerPlugin, beam::BeamPlugin))
         .init_resource::<Game>()
         .add_systems(OnEnter(GameState::Playing), setup_camera)
         .init_state::<GameState>()
