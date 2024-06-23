@@ -78,7 +78,7 @@ fn enemy_fire(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    for (enemy, mut transform) in query.iter_mut() {
+    for (enemy, transform) in query.iter_mut() {
         // Shoot every N seconds
         if timer.0.tick(time.delta()).just_finished() {
             commands.spawn((

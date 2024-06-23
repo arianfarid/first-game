@@ -24,10 +24,7 @@ fn main() {
         .init_state::<GameState>()
         .run();
 }
-struct Cell {
-    width: u32,
-    height: u32,
-}
+
 /// Used to help identify our main camera
 #[derive(Component)]
 pub struct MainCamera;
@@ -47,6 +44,5 @@ enum Direction {
 }
 #[derive(Resource, Default)]
 struct Game {
-    board: Vec<Vec<Cell>>,
     score: i32,
 }

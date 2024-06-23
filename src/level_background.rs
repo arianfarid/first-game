@@ -39,7 +39,6 @@ fn animate_bg(
     mut query: Query<(&mut BackgroundTile, &mut Transform, Entity)>
 ) {
     for (tile, mut transform, entity) in query.iter_mut() {
-        transform.translation +=  (TILE_SPEED * time.delta_seconds()).extend(-1.);
         // //despawn tile if out out of view
         // //using hard-coded dims now, but should query window size or set hard window size
         if transform.translation.y <= -TILE_Y_BOUND {
@@ -50,7 +49,9 @@ fn animate_bg(
             commands.entity(entity).despawn();
             render_tile(&mut commands, &asset_server, Transform::from_xyz(TILE_X_BOUND, transform.translation.y, -1.));
         }
-
+        transform.translation +=  (TILE_SPEED * time.delta_seconds()).extend(-1.);
+        transform.translation.x = transform.translation.x.floor();
+        transform.translation.y = transform.translation.y.floor();
     }
 }
 

@@ -23,14 +23,12 @@ struct Velocity {
     x: f32,
     y: f32
 }
-const VELOCITY_CAP: f32 = 300.;
 
 #[derive(Component, Debug)]
 struct Acceleration {
     x: f32,
     y: f32
 }
-const ACC_CAP: f32 = 20.;
 const USER_SPEED: f32 = 200.0;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -103,7 +101,6 @@ fn rotate_user(
 
 fn user_fire_beam(
     mut player_query: Query<&mut Transform, With<Player>>,
-    q_windows: Query<&Window, With<PrimaryWindow>>,
     mouse_buttons:Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     asset_server: Res<AssetServer>,
@@ -116,7 +113,7 @@ fn user_fire_beam(
     // Convert to axis of rotation
     let axis = (player_angle * Vec3::Y).xy();
     
-    if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.just_pressed(MouseButton::Left) {
+    if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.pressed(MouseButton::Left) {
         let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
         spawn_transform.translation = player_location;
         spawn_transform.rotation = player_angle;
