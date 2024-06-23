@@ -2,6 +2,7 @@ use bevy::prelude::*;
 mod basic_enemy;
 mod player;
 pub mod beam;
+mod level_background;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 pub enum GameState {
@@ -12,7 +13,12 @@ pub enum GameState {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, basic_enemy::BasicEnemyPlugin, player::PlayerPlugin, beam::BeamPlugin))
+        .add_plugins((
+                DefaultPlugins, 
+                basic_enemy::BasicEnemyPlugin, 
+                player::PlayerPlugin, 
+                beam::BeamPlugin,
+                level_background::LevelBackgroundPlugin))
         .init_resource::<Game>()
         .add_systems(OnEnter(GameState::Playing), setup_camera)
         .init_state::<GameState>()
