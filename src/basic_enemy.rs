@@ -1,6 +1,6 @@
-use bevy::{app::{App, Plugin}, prelude::*};
+use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::GameState;
+use crate::{beam::Beam, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -10,16 +10,23 @@ impl Plugin for BasicEnemyPlugin {
     fn build(&self, app: &mut App) {
        app
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
+       .add_event::<CollisionEvent>()
        .add_systems(OnEnter(GameState::Playing), setup)
-       .add_systems(Update, (move_enemy, enemy_fire, animate_beams).chain());
+       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain());
 
     }
 }
 
 #[derive(Component)]
 struct BasicEnemy {
-    direction: f32
+    direction: f32,
+    health: f32
+
 }
+#[derive(Event, Default)]
+struct CollisionEvent;
+#[derive(Component)]
+struct Collider;
 #[derive(Resource)]
 struct ShootTimer(Timer);
 
@@ -31,7 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1.}
+        BasicEnemy { direction : 1., health: 100.}
     ));
     commands.spawn((
         SpriteBundle {
@@ -39,7 +46,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(60., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1.}
+        BasicEnemy { direction : 1., health: 100.}
     ));
     commands.spawn((
         SpriteBundle {
@@ -47,7 +54,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(-60., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1.}
+        BasicEnemy { direction : 1., health: 100.}
     ));
 }
 
@@ -108,5 +115,32 @@ fn animate_beams(
     for (beam, mut transform) in query.iter_mut() {
         let new_y = transform.translation.y + (beam.direction * BEAM_SPEED * time.delta_seconds());
         transform.translation.y = new_y;
+    }
+}
+
+fn check_collision(
+    mut enemy_query: Query<(Entity, &Transform, &mut BasicEnemy), With<BasicEnemy>>,
+    mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
+    mut collision_events: EventWriter<CollisionEvent>,
+    mut commands : Commands
+) {
+    for (e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
+        let ecircle = 
+            BoundingCircle::new(
+                e_transform.translation.truncate(),
+                10.);
+        for (b_entity, b_transform, beam) in beam_query.iter_mut()  {
+            let b_box = 
+                Aabb2d::new(b_transform.translation.truncate(), b_transform.scale.truncate() / 2.);
+            if ecircle.intersects(&b_box) {
+                collision_events.send_default();
+                e_enemy.health -= beam.power;
+                commands.entity(b_entity).despawn();
+            }
+        }
+        if(e_enemy.health < 1.) {
+            //dead
+            commands.entity(e_entity).despawn();
+        }
     }
 }

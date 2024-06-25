@@ -127,7 +127,8 @@ fn user_fire_beam(
             Beam {
                 lifetime: 4.,
                 speed: 500.,
-                direction: Vec2::new(axis.x, axis.y)
+                direction: Vec2::new(axis.x, axis.y),
+                power: 20.,
             }
         ));
     }
