@@ -120,7 +120,7 @@ fn user_fire_beam(
         commands.spawn((
             SpriteBundle {
                 transform: spawn_transform,
-                texture: asset_server.load("beam_basic.png"),
+                texture: asset_server.load("beam_orb.png"),
                 ..default()
             },
             //todo: 2 weapons, should be enum w/ params
