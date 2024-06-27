@@ -1,7 +1,7 @@
 
 use bevy::{app::{App, Plugin}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{MainCamera, GameState, beam::Beam};
+use crate::{MainCamera, GameState, beam::{Beam, BeamType}};
 
 pub struct PlayerPlugin;
 
@@ -120,16 +120,11 @@ fn user_fire_beam(
         commands.spawn((
             SpriteBundle {
                 transform: spawn_transform,
-                texture: asset_server.load("beam_orb.png"),
+                texture: asset_server.load("wave.png"),
                 ..default()
             },
             //todo: 2 weapons, should be enum w/ params
-            Beam {
-                lifetime: 4.,
-                speed: 500.,
-                direction: Vec2::new(axis.x, axis.y),
-                power: 20.,
-            }
+            Beam::new(BeamType::Proton, Vec2::new(axis.x, axis.y))
         ));
     }
 }
