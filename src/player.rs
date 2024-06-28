@@ -1,17 +1,21 @@
 
 use bevy::{app::{App, Plugin}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{MainCamera, GameState, beam::{Beam, BeamType}};
+use crate::{GameState, GameLevel, beam::{Beam, BeamType}};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
        app
-       .add_systems(OnEnter(GameState::Playing), setup)
-       .add_systems(Update, move_user)
-       .add_systems(Update, rotate_user)
-       .add_systems(Update, user_fire_beam);
+       .add_systems(OnEnter((GameLevel::SpaceOne)), setup)
+       .add_systems(OnEnter(GameLevel::SpaceOne), setup_camera)
+       .add_systems(Update, (toggle_pause))
+       .add_systems(
+            Update, 
+            (toggle_pause, move_user, rotate_user, user_fire_beam)
+                .chain().run_if(in_state(GameState::Playing))
+        );
     }
 }
 
@@ -127,4 +131,28 @@ fn user_fire_beam(
             Beam::new(BeamType::Proton, Vec2::new(axis.x, axis.y))
         ));
     }
+}
+
+fn toggle_pause(
+    curr_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        if curr_state.get() == &GameState::Playing {
+            next_state.set(GameState::Paused)
+        } else {
+            next_state.set(GameState::Playing)
+        }
+    }
+}
+
+
+/// Used to help identify our main camera
+#[derive(Component)]
+pub struct MainCamera;
+
+
+fn setup_camera(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((Camera2dBundle::default(), MainCamera));
 }

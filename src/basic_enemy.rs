@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{beam::Beam, GameState};
+use crate::{beam::Beam, GameLevel, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -11,8 +11,8 @@ impl Plugin for BasicEnemyPlugin {
        app
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
        .add_event::<CollisionEvent>()
-       .add_systems(OnEnter(GameState::Playing), setup)
-       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain());
+       .add_systems(OnEnter(GameLevel::SpaceOne), setup)
+       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)));
 
     }
 }

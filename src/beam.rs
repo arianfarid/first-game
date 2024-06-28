@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 
+use crate::GameState;
+
 pub struct BeamPlugin;
 impl Plugin for BeamPlugin {
     fn build(&self, app: &mut App) {
        app
-       .add_systems(Update, update_beam);
+       .add_systems(Update, (update_beam).run_if(in_state(GameState::Playing)));
     }
 }
 

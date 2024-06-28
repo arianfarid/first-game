@@ -8,7 +8,15 @@ mod level_background;
 pub enum GameState {
     #[default]
     Playing,
+    Paused,
     // GameOver,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+pub enum GameLevel {
+    #[default]
+    SpaceOne,
+    SpaceTwo,
 }
 
 fn main() {
@@ -20,18 +28,9 @@ fn main() {
                 beam::BeamPlugin,
                 level_background::LevelBackgroundPlugin))
         .init_resource::<Game>()
-        .add_systems(OnEnter(GameState::Playing), setup_camera)
         .init_state::<GameState>()
+        .init_state::<GameLevel>()
         .run();
-}
-
-/// Used to help identify our main camera
-#[derive(Component)]
-pub struct MainCamera;
-
-
-fn setup_camera(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((Camera2dBundle::default(), MainCamera));
 }
 
 
