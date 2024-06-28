@@ -1,6 +1,6 @@
-use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
+use bevy::{app::{App, Plugin}, ecs::entity, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{beam::Beam, GameLevel, GameState};
+use crate::{basic_enemy_move_patterns::{basic_move, EnemyMovePattern}, beam::Beam, GameLevel, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -21,11 +21,26 @@ impl Plugin for BasicEnemyPlugin {
 }
 
 #[derive(Component)]
-struct BasicEnemy {
-    direction: f32,
+pub struct BasicEnemy {
+    pub direction: f32,
     health: f32,
+    move_pattern: EnemyMovePattern,
     state: EnemyState
 
+}
+impl BasicEnemy {
+    fn new(move_pattern: EnemyMovePattern) -> Self {
+        BasicEnemy { 
+            state: EnemyState::Active, 
+            direction : 1., 
+            health: 100.,
+            move_pattern: move_pattern,
+        }
+    }
+    fn health(mut self, health: f32) -> Self {
+        self.health = health;
+        self
+    }
 }
 enum EnemyState {
     Active,
@@ -46,7 +61,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0., 300., 0.),
             ..default()
         },
-        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
+        BasicEnemy::new(EnemyMovePattern::Basic),
     ));
     commands.spawn((
         SpriteBundle {
@@ -54,7 +69,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(60., 300., 0.),
             ..default()
         },
-        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
+        BasicEnemy::new(EnemyMovePattern::Basic),
     ));
     commands.spawn((
         SpriteBundle {
@@ -62,7 +77,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(-60., 300., 0.),
             ..default()
         },
-        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
+        BasicEnemy::new(EnemyMovePattern::Basic),
     ));
 }
 
@@ -71,12 +86,20 @@ fn move_enemy(
     time: Res<Time>,
 ) {
     for (mut enemy, mut transform) in query.iter_mut() {
-        //simply flip direction depending on bounds
-        if transform.translation.x >= 600. {
-            enemy.direction = -1.
-        } else if transform.translation.x <= -600. {
-            enemy.direction = 1.
+        match enemy.move_pattern {
+            EnemyMovePattern::Basic => {
+                //simply flip direction depending on bounds
+                if transform.translation.x >= 600. {
+                    enemy.direction = -1.
+                } else if transform.translation.x <= -600. {
+                    enemy.direction = 1.
+                }
+            }
+            EnemyMovePattern::StartShootGo => {
+
+            }
         }
+        
 
         //now move enemy
         let new_pos = 

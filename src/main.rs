@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 mod basic_enemy;
+mod basic_enemy_move_patterns;
 mod player;
 pub mod beam;
 mod level_background;
