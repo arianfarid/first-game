@@ -72,4 +72,4 @@ pub fn update_beam(
                 commands.entity(entity).despawn();
             }
         }
-    }
+}

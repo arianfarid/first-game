@@ -11,8 +11,11 @@ impl Plugin for BasicEnemyPlugin {
        app
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
        .add_event::<CollisionEvent>()
+       .add_event::<ExplosionEvent>()
        .add_systems(OnEnter(GameLevel::SpaceOne), setup)
-       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)));
+       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)))
+       .add_systems(FixedUpdate, (animate_explosion))
+       ;
 
     }
 }
@@ -20,8 +23,13 @@ impl Plugin for BasicEnemyPlugin {
 #[derive(Component)]
 struct BasicEnemy {
     direction: f32,
-    health: f32
+    health: f32,
+    state: EnemyState
 
+}
+enum EnemyState {
+    Active,
+    Dead,
 }
 #[derive(Event, Default)]
 struct CollisionEvent;
@@ -38,7 +46,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1., health: 100.}
+        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
     ));
     commands.spawn((
         SpriteBundle {
@@ -46,7 +54,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(60., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1., health: 100.}
+        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
     ));
     commands.spawn((
         SpriteBundle {
@@ -54,7 +62,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(-60., 300., 0.),
             ..default()
         },
-        BasicEnemy { direction : 1., health: 100.}
+        BasicEnemy { state: EnemyState::Active, direction : 1., health: 100.}
     ));
 }
 
@@ -122,25 +130,88 @@ fn check_collision(
     mut enemy_query: Query<(Entity, &Transform, &mut BasicEnemy), With<BasicEnemy>>,
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
-    mut commands : Commands
+    mut explosion_events: EventWriter<ExplosionEvent>,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut commands : Commands,
 ) {
-    for (e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
-        let ecircle = 
-            BoundingCircle::new(
-                e_transform.translation.truncate(),
-                10.);
-        for (b_entity, b_transform, beam) in beam_query.iter_mut()  {
-            let b_box = 
-                Aabb2d::new(b_transform.translation.truncate(), b_transform.scale.truncate() / 2.);
-            if ecircle.intersects(&b_box) {
-                collision_events.send_default();
-                e_enemy.health -= beam.power;
-                commands.entity(b_entity).despawn();
+    for (mut e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
+        match e_enemy.state {
+            EnemyState::Active => {
+                let ecircle = 
+                    BoundingCircle::new(
+                        e_transform.translation.truncate(),
+                        10.);
+                for (b_entity, b_transform, beam) in beam_query.iter_mut()  {
+                    let b_box = 
+                        Aabb2d::new(b_transform.translation.truncate(), b_transform.scale.truncate() / 2.);
+                    if ecircle.intersects(&b_box) {
+                        collision_events.send_default();
+                        e_enemy.health -= beam.power;
+                        commands.entity(b_entity).despawn();
+                    }
+                }
+                if (e_enemy.health < 1.) {
+                    e_enemy.state = EnemyState::Dead;
+                    explosion_events.send_default(); //sound?
+                    let texture = asset_server.load("test_explosion.png");
+                    let layout = TextureAtlasLayout::from_grid(Vec2::new(24.0, 24.0), 5, 1, None, None);
+                    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+                    let animation_indices = AnimationIndices { first: 0, last: 4 };
+                    commands.entity(e_entity).despawn();
+                    commands.spawn((
+                        SpriteSheetBundle {
+                            texture,
+                            atlas: TextureAtlas {
+                                layout: texture_atlas_layout,
+                                index: animation_indices.first,
+                            },
+                            transform: Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.),
+                            ..default()
+                        },
+                        Explosion,
+                        animation_indices,
+                        AnimationTimer(Timer::from_seconds(0.12, TimerMode::Repeating)),
+                    ));
+                }
+            }
+            EnemyState::Dead => {
+                commands.entity(e_entity).despawn();
             }
         }
-        if(e_enemy.health < 1.) {
-            //dead
-            commands.entity(e_entity).despawn();
+        
+    }
+}
+
+#[derive(Event, Default, Debug)]
+struct ExplosionEvent;
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+#[derive(Component)]
+struct AnimationIndices {
+    first: usize,
+    last: usize,
+}
+#[derive(Component)]
+struct Explosion;
+
+fn animate_explosion(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas, Entity), With<Explosion>>,
+) {
+    for (indices, 
+        mut timer, 
+        mut atlas, 
+        entity) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            if atlas.index == indices.last {
+                commands.entity(entity).despawn();
+            }
+            else {
+                atlas.index += 1;
+            };
         }
     }
 }
