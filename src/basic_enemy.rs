@@ -182,7 +182,7 @@ fn check_collision(
                     let texture_atlas_layout = texture_atlas_layouts.add(layout);
                     let animation_indices = AnimationIndices { first: 0, last: 4 };
                     let mut explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
-                    explosion_transform.scale = Vec3::new(3., 3., 3.);
+                    explosion_transform.scale = Vec3::new(2., 2., 2.);
                     commands.entity(e_entity).despawn();
                     commands.spawn((
                         SpriteSheetBundle {
