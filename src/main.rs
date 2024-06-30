@@ -2,6 +2,7 @@ use bevy::prelude::*;
 mod basic_enemy;
 mod basic_enemy_move_patterns;
 mod player;
+mod canon;
 pub mod beam;
 mod level_background;
 
@@ -24,10 +25,11 @@ fn main() {
     App::new()
         .add_plugins((
                 DefaultPlugins, 
+                level_background::LevelBackgroundPlugin,
                 basic_enemy::BasicEnemyPlugin, 
                 player::PlayerPlugin, 
                 beam::BeamPlugin,
-                level_background::LevelBackgroundPlugin))
+         ))
         .init_resource::<Game>()
         .init_state::<GameState>()
         .init_state::<GameLevel>()

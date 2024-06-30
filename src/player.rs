@@ -1,13 +1,14 @@
 
 use bevy::{app::{App, Plugin}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{GameState, GameLevel, beam::{Beam, BeamType}};
+use crate::{GameState, GameLevel, beam::{Beam, BeamType}, canon::{CanonPlugin}};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
        app
+       .add_plugins(CanonPlugin)
        .add_systems(OnEnter((GameLevel::SpaceOne)), setup)
        .add_systems(OnEnter(GameLevel::SpaceOne), setup_camera)
        .add_systems(Update, (toggle_pause))
@@ -20,7 +21,16 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Component, Debug)]
-struct Player;
+pub struct Player {
+    left_weapon: WeaponType,
+}
+
+#[derive(Component, Debug, Default)]
+pub enum WeaponType {
+    #[default]
+    None,
+    PlasmaCanon
+}
 
 #[derive(Component, Debug)]
 struct Velocity {
@@ -33,7 +43,7 @@ struct Acceleration {
     x: f32,
     y: f32
 }
-const USER_SPEED: f32 = 200.0;
+pub const USER_SPEED: f32 = 200.0;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
@@ -43,7 +53,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(100., 0., 0.),
             ..default()
         },
-        Player,
+        Player { left_weapon: WeaponType::PlasmaCanon},
         Velocity {x: 0., y: 0.},
         Acceleration {x: 0., y: 0.},
     ));
