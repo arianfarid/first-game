@@ -16,7 +16,6 @@ pub struct Beam {
     pub speed: f32,
     pub direction: Vec2,
     pub power: f32,
-    pub lockout_time: f32,
 }
 impl Beam {
     pub fn new(beam_type: BeamType, direction: Vec2) -> Beam {
@@ -27,7 +26,6 @@ impl Beam {
                     speed: 450.,
                     direction: direction,
                     power: 20.,
-                    lockout_time: 0.
                 }
             }
             BeamType::Laser => {
@@ -36,7 +34,6 @@ impl Beam {
                     speed: 500.,
                     direction: direction,
                     power: 30.,
-                    lockout_time: 0.
                 }
             }
             BeamType::Wave => {
@@ -45,7 +42,14 @@ impl Beam {
                     speed: 500.,
                     direction: direction,
                     power: 50.,
-                    lockout_time: 0.25
+                }
+            }
+            BeamType::PlasmaOrb => {
+                Beam {
+                    lifetime: 4.,
+                    speed: 500.,
+                    direction: direction,
+                    power: 50.,
                 }
             }
         }
@@ -53,9 +57,10 @@ impl Beam {
 }
 
 pub enum BeamType {
+    PlasmaOrb,
     Proton,
     Laser,
-    Wave
+    Wave,
 }
 
 

@@ -1,6 +1,6 @@
 use bevy::{math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{player::{Player, USER_SPEED}, GameState};
+use crate::{beam::{Beam, BeamType}, player::{Player, USER_SPEED}, GameState};
 
 pub struct CanonPlugin;
 
@@ -10,7 +10,7 @@ impl Plugin for CanonPlugin {
         .add_systems((OnEnter((GameState::Playing))), setup)
         .add_systems(
             Update,
-             (move_canon)
+             (move_canon, fire_canon).chain().run_if(in_state(GameState::Playing))
         )
         ;
     }
@@ -22,16 +22,21 @@ impl Plugin for CanonPlugin {
 #[derive(Component, Debug)]
 struct Canon {
     level: u8, // The nth order of the canon.
-    firing: bool
+    lockout_time: f32,
+    needs_cooldown: bool
 }
 impl Canon {
     fn new(level: u8) -> Self {
         Canon {
             level: level,
-            firing: false
+            lockout_time: 0.35,
+            needs_cooldown: false
         }
     }
 }
+#[derive(Component, Resource)]
+struct ShootTimer(Timer);
+
 const CANON_HEIGHT: f32 = 27.;
 struct AnimationIndices {
     first: usize,
@@ -50,7 +55,8 @@ fn setup(
     let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let animation_indices = AnimationIndices { first: 0, last: 3 };
-
+    let canon = Canon::new(0); 
+    let canon_lockout = canon.lockout_time;
     commands.spawn((
         SpriteSheetBundle {
             texture: texture,
@@ -61,7 +67,8 @@ fn setup(
             transform: Transform::from_xyz(player_transform.translation.x, player_transform.translation.y, player_transform.translation.z),
             ..default()
         },
-        Canon::new(0),
+        canon,
+        ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once))
     ));
 }
 
@@ -95,6 +102,46 @@ fn move_canon(
     }
 }
 
-fn fire_canon() {
-
+fn fire_canon(
+    mut canons: Query<(&mut Transform, &mut Canon, &mut ShootTimer), (With<Canon>, Without<Player>)>,
+    mouse_buttons:Res<ButtonInput<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    asset_server: Res<AssetServer>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.pressed(MouseButton::Left) {
+        for (canon_transform, mut canon, mut shoot_timer) in canons.iter_mut() {
+            if shoot_timer.0.tick(time.delta()).finished() {
+                println!("switch back");
+                canon.needs_cooldown = false;
+            }
+            match canon.needs_cooldown {
+                true => {
+                    // in cooldown, do nothing
+                    println!("can't shoot");
+                }
+                false => {
+                    let canon_location = canon_transform.translation;
+                    // let canon_angle: Quat = canon_transform.rotation;
+                   
+                    let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
+                    spawn_transform.translation = canon_location;
+                    // spawn_transform.rotation = canon_angle;
+                    let plasma_orb = Beam:: new(BeamType::PlasmaOrb, Vec2::new(0., 1.));
+                    canon.needs_cooldown = true;
+                    shoot_timer.0.reset();
+                    commands.spawn((
+                        SpriteBundle {
+                            transform: spawn_transform,
+                            texture: asset_server.load("plasma_orb.png"),
+                            ..default()
+                        },
+                        //todo: 2 weapons, should be enum w/ params
+                        plasma_orb,
+                    ));
+                }
+            }
+        } 
+    }
 }
