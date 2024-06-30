@@ -7,7 +7,7 @@ impl Plugin for LevelBackgroundPlugin {
     fn build(&self, app: &mut App) {
        app
        .add_systems(OnEnter(GameState::Playing), load_bg)
-       .add_systems(Update, (animate_bg).run_if(in_state(GameState::Playing)));
+       .add_systems(FixedUpdate, (animate_bg).run_if(in_state(GameState::Playing)));
     }
 }
 
