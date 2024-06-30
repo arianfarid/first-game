@@ -12,6 +12,7 @@ impl Plugin for CanonPlugin {
             Update,
              (move_canon, fire_canon).chain().run_if(in_state(GameState::Playing))
         )
+        .add_systems(FixedUpdate, (animate_canon).after(fire_canon))
         ;
     }
 }
@@ -37,7 +38,10 @@ impl Canon {
 #[derive(Component, Resource)]
 struct ShootTimer(Timer);
 
+const CANON_ANIMATION_SPEED: f32 = 0.03;
 const CANON_HEIGHT: f32 = 27.;
+
+#[derive(Component)]
 struct AnimationIndices {
     first: usize,
     last: usize,
@@ -57,6 +61,8 @@ fn setup(
     let animation_indices = AnimationIndices { first: 0, last: 3 };
     let canon = Canon::new(0); 
     let canon_lockout = canon.lockout_time;
+    let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
+    animation_timer.0.pause();
     commands.spawn((
         SpriteSheetBundle {
             texture: texture,
@@ -68,7 +74,9 @@ fn setup(
             ..default()
         },
         canon,
-        ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once))
+        animation_indices,
+        ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
+        animation_timer,
     ));
 }
 
@@ -91,9 +99,6 @@ fn move_canon(
         
         
         if !canon_circle.intersects(&player_bb) { 
-            println!("{:?}", canon_circle);
-            println!("{:?}", player_bb);
-            println!("move");
             //move
             // let dir = Vec3::new(player_transform.translation.x - canon_transform.translation.x, player_transform.translation.y - canon_transform.translation.y, 0.0).normalize();
             let dir = (player_transform.translation - canon_transform.translation);
@@ -103,7 +108,7 @@ fn move_canon(
 }
 
 fn fire_canon(
-    mut canons: Query<(&mut Transform, &mut Canon, &mut ShootTimer), (With<Canon>, Without<Player>)>,
+    mut canons: Query<(&mut Transform, &mut Canon, &mut ShootTimer, &mut AnimationTimer), (With<Canon>, Without<Player>)>,
     mouse_buttons:Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     asset_server: Res<AssetServer>,
@@ -111,15 +116,12 @@ fn fire_canon(
     mut commands: Commands,
 ) {
     if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.pressed(MouseButton::Left) {
-        for (canon_transform, mut canon, mut shoot_timer) in canons.iter_mut() {
+        for (canon_transform, mut canon, mut shoot_timer, mut animation_timer) in canons.iter_mut() {
             if shoot_timer.0.tick(time.delta()).finished() {
-                println!("switch back");
                 canon.needs_cooldown = false;
             }
             match canon.needs_cooldown {
                 true => {
-                    // in cooldown, do nothing
-                    println!("can't shoot");
                 }
                 false => {
                     let canon_location = canon_transform.translation;
@@ -131,6 +133,7 @@ fn fire_canon(
                     let plasma_orb = Beam:: new(BeamType::PlasmaOrb, Vec2::new(0., 1.));
                     canon.needs_cooldown = true;
                     shoot_timer.0.reset();
+                    animation_timer.0.unpause();
                     commands.spawn((
                         SpriteBundle {
                             transform: spawn_transform,
@@ -143,5 +146,30 @@ fn fire_canon(
                 }
             }
         } 
+    }
+}
+
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+
+fn animate_canon(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas), (With<Canon>)>,
+) {
+    for (indices, 
+        mut animation_timer, 
+        mut atlas
+    ) in query.iter_mut() {
+        animation_timer.tick(time.delta());
+        if animation_timer.just_finished() {
+            if atlas.index == indices.last {
+                atlas.index = indices.first;
+                animation_timer.0.pause();
+            }
+            else {
+                atlas.index += 1;
+            };
+        }
     }
 }
