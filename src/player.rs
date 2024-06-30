@@ -1,7 +1,7 @@
 
 use bevy::{app::{App, Plugin}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{GameState, GameLevel, beam::{Beam, BeamType}, canon::{CanonPlugin}};
+use crate::{GameState, GameLevel, beam::{Beam, BeamType}, camera::{MainCamera}, canon::{CanonPlugin}};
 
 pub struct PlayerPlugin;
 
@@ -10,7 +10,6 @@ impl Plugin for PlayerPlugin {
        app
        .add_plugins(CanonPlugin)
        .add_systems(OnEnter((GameLevel::SpaceOne)), setup)
-       .add_systems(OnEnter(GameLevel::SpaceOne), setup_camera)
        .add_systems(Update, (toggle_pause))
        .add_systems(
             Update, 
@@ -158,11 +157,3 @@ fn toggle_pause(
 }
 
 
-/// Used to help identify our main camera
-#[derive(Component)]
-pub struct MainCamera;
-
-
-fn setup_camera(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((Camera2dBundle::default(), MainCamera));
-}

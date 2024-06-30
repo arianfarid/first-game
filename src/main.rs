@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 mod basic_enemy;
 mod basic_enemy_move_patterns;
+mod camera;
 mod player;
 mod canon;
 pub mod beam;
@@ -25,6 +26,7 @@ fn main() {
     App::new()
         .add_plugins((
                 DefaultPlugins, 
+                camera::GameCameraPlugin,
                 level_background::LevelBackgroundPlugin,
                 basic_enemy::BasicEnemyPlugin, 
                 player::PlayerPlugin, 
