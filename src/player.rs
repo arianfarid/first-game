@@ -1,7 +1,7 @@
 
-use bevy::{app::{App, Plugin}, prelude::*};
+use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{GameState, GameLevel, beam::{Beam, BeamType}, camera::{MainCamera}, canon::{CanonPlugin}};
+use crate::{GameState, GameLevel, basic_enemy::{EnemyFire}, beam::{Beam, BeamType}, camera::{MainCamera}, canon::{CanonPlugin}};
 
 pub struct PlayerPlugin;
 
@@ -21,7 +21,20 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component, Debug)]
 pub struct Player {
+    health: f32,
+    shield: f32,
+    damaged_state: bool,
     left_weapon: WeaponType,
+}
+impl Default for Player {
+    fn default() -> Player {
+        Player {
+            health: 100.,
+            shield: 100.,
+            damaged_state: false,
+            left_weapon: WeaponType::PlasmaCanon,
+        }
+    }
 }
 
 #[derive(Component, Debug, Default)]
@@ -52,7 +65,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(100., 0., 0.),
             ..default()
         },
-        Player { left_weapon: WeaponType::PlasmaCanon},
+        Player { ..Default::default() },
         Velocity {x: 0., y: 0.},
         Acceleration {x: 0., y: 0.},
     ));
@@ -156,4 +169,35 @@ fn toggle_pause(
     }
 }
 
-
+fn check_collision(
+    commands: Commands,
+    mut player_query: Query<(&Transform, &mut Player), With<Player>>,
+    mut enemy_fire_query: Query<(&Transform, &mut EnemyFire), With<EnemyFire>>,
+    // mut collision_events: EventWriter<CollisionEvent>,
+) {
+    let (player_transform, mut player) = player_query.single_mut();
+    for (enemy_fire_transform, fire) in enemy_fire_query.iter_mut() {
+        let pcircle = BoundingCircle::new(
+            player_transform.translation.truncate(),
+            20.
+        );
+        let b_box = Aabb2d::new(
+            enemy_fire_transform.translation.truncate(),
+            enemy_fire_transform.scale.truncate() / 2.
+        );
+        if pcircle.intersects(&b_box) {
+            //shield should always be taken first;
+            if player.shield >= fire.power {
+                player.shield -= fire.power;
+            } else if player.shield < fire.power {
+                let from_health = fire.power - player.shield;
+                //need val to roll over into health
+                player.shield = 0.;
+                player.health -= from_health;
+            } else {
+                player.health -= fire.power;
+            }
+            //continue logic for death
+        }
+    }
+}

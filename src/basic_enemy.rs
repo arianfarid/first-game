@@ -28,6 +28,10 @@ pub struct BasicEnemy {
     state: EnemyState
 
 }
+#[derive(Component)]
+pub struct EnemyFire {
+    pub power: f32,
+}
 impl BasicEnemy {
     fn new(move_pattern: EnemyMovePattern) -> Self {
         BasicEnemy { 
@@ -47,7 +51,7 @@ enum EnemyState {
     Dead,
 }
 #[derive(Event, Default)]
-struct CollisionEvent;
+pub struct CollisionEvent;
 #[derive(Component)]
 struct Collider;
 #[derive(Resource)]
@@ -128,7 +132,8 @@ fn enemy_fire(
                         0.),
                     ..default()
                 },
-                BasicBeam { direction : -1.}
+                BasicBeam { direction : -1.},
+                EnemyFire { power: 20. },
             ));
         }
     }
