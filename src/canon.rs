@@ -1,6 +1,6 @@
 use bevy::{math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{beam::{Beam, BeamType}, player::{Player, USER_SPEED}, GameState};
+use crate::{beam::{Beam, BeamType}, player::{Player, WeaponType, USER_SPEED}, GameState};
 
 pub struct CanonPlugin;
 
@@ -24,14 +24,21 @@ impl Plugin for CanonPlugin {
 struct Canon {
     level: u8, // The nth order of the canon.
     lockout_time: f32,
-    needs_cooldown: bool
+    needs_cooldown: bool,
+    position: Position,
+}
+#[derive(Component, Debug)]
+pub enum Position {
+    Left,
+    Right
 }
 impl Canon {
-    fn new(level: u8) -> Self {
+    fn new(level: u8, position: Position,) -> Self {
         Canon {
             level: level,
             lockout_time: 0.35,
-            needs_cooldown: false
+            needs_cooldown: false,
+            position: position,
         }
     }
 }
@@ -39,6 +46,7 @@ impl Canon {
 struct ShootTimer(Timer);
 
 const CANON_ANIMATION_SPEED: f32 = 0.03;
+const CANON_DISTANCE: f32 = 20.;
 const CANON_HEIGHT: f32 = 27.;
 
 #[derive(Component)]
@@ -50,34 +58,61 @@ struct AnimationIndices {
 fn setup(
     mut commands: Commands, 
     asset_server: Res<AssetServer>, 
-    mut player_query: Query<(&mut Transform), With<Player>>,
+    mut player_query: Query<(&mut Transform, &Player), With<Player>>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 
 ) {
-    let player_transform = player_query.single_mut();
-    let texture = asset_server.load("cannon.png");
-    let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 3 };
-    let canon = Canon::new(0); 
-    let canon_lockout = canon.lockout_time;
-    let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
-    animation_timer.0.pause();
-    commands.spawn((
-        SpriteSheetBundle {
-            texture: texture,
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout,
-                index: animation_indices.first,
+    let (player_transform, player) = player_query.single_mut();
+    if player.left_weapon == WeaponType::PlasmaCanon {
+        let texture = asset_server.load("cannon.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
+        let texture_atlas_layout = texture_atlas_layouts.add(layout);
+        let animation_indices = AnimationIndices { first: 0, last: 3 };
+        let canon = Canon::new(0, Position::Left); 
+        let canon_lockout = canon.lockout_time;
+        let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
+        animation_timer.0.pause();
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
+                },
+                transform: Transform::from_xyz(player_transform.translation.x - CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
+                ..default()
             },
-            transform: Transform::from_xyz(player_transform.translation.x, player_transform.translation.y, player_transform.translation.z),
-            ..default()
-        },
-        canon,
-        animation_indices,
-        ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
-        animation_timer,
-    ));
+            canon,
+            animation_indices,
+            ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
+            animation_timer,
+        ));
+    }
+    if player.right_weapon == WeaponType::PlasmaCanon {
+        let texture = asset_server.load("cannon.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
+        let texture_atlas_layout = texture_atlas_layouts.add(layout);
+        let animation_indices = AnimationIndices { first: 0, last: 3 };
+        let canon = Canon::new(0, Position::Right); 
+        let canon_lockout = canon.lockout_time;
+        let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
+        animation_timer.0.pause();
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
+                },
+                transform: Transform::from_xyz(player_transform.translation.x + CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
+                ..default()
+            },
+            canon,
+            animation_indices,
+            ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
+            animation_timer,
+        ));
+    }
 }
 
 fn move_canon(
@@ -87,21 +122,24 @@ fn move_canon(
 ) {
     let player_transform = player_query.single_mut();
     for (mut canon_transform, canon) in canons.iter_mut() {
+        let transform_x_dim = match canon.position {
+            Position::Left =>  -CANON_DISTANCE,
+            Position::Right => CANON_DISTANCE,
+        };
         let canon_circle = BoundingCircle::new(
             canon_transform.translation.truncate(),
             CANON_HEIGHT
         );
+        let mut move_target = player_transform.translation;
+        move_target.x += transform_x_dim;
         let player_bb = Aabb2d::new(
-            player_transform.translation.truncate(),
+            move_target.truncate(),
             player_transform.scale.truncate() / 2.
         );
-        
-        
-        
         if !canon_circle.intersects(&player_bb) { 
             //move
             // let dir = Vec3::new(player_transform.translation.x - canon_transform.translation.x, player_transform.translation.y - canon_transform.translation.y, 0.0).normalize();
-            let dir = (player_transform.translation - canon_transform.translation);
+            let dir = (move_target - canon_transform.translation);
             canon_transform.translation += dir * time.delta_seconds() * 2.;
         }
     }

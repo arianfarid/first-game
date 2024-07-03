@@ -1,4 +1,7 @@
-use bevy::{app::{App, Plugin}, prelude::*};
+use bevy::{
+    app::{App, Plugin}, 
+    prelude::*
+};
 
 use crate::GameLevel;
 pub struct GameCameraPlugin;

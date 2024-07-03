@@ -24,7 +24,9 @@ pub struct Player {
     health: f32,
     shield: f32,
     damaged_state: bool,
-    left_weapon: WeaponType,
+    pub front_weapon: WeaponType,
+    pub left_weapon: WeaponType,
+    pub right_weapon: WeaponType,
 }
 impl Default for Player {
     fn default() -> Player {
@@ -32,15 +34,18 @@ impl Default for Player {
             health: 100.,
             shield: 100.,
             damaged_state: false,
+            front_weapon: WeaponType::Wave,
             left_weapon: WeaponType::PlasmaCanon,
+            right_weapon: WeaponType::PlasmaCanon,
         }
     }
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, PartialEq)]
 pub enum WeaponType {
     #[default]
     None,
+    Wave,
     PlasmaCanon
 }
 
