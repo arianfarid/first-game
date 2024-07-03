@@ -5,7 +5,6 @@ use crate::{basic_enemy_move_patterns::{basic_move, EnemyMovePattern}, beam::Bea
 const ENEMY_SPEED: f32 = 400.;
 
 pub struct BasicEnemyPlugin;
-
 impl Plugin for BasicEnemyPlugin {
     fn build(&self, app: &mut App) {
        app
@@ -26,7 +25,6 @@ pub struct BasicEnemy {
     health: f32,
     move_pattern: EnemyMovePattern,
     state: EnemyState
-
 }
 #[derive(Component)]
 pub struct EnemyFire {
@@ -52,8 +50,7 @@ enum EnemyState {
 }
 #[derive(Event, Default)]
 pub struct CollisionEvent;
-#[derive(Component)]
-struct Collider;
+
 #[derive(Resource)]
 struct ShootTimer(Timer);
 
@@ -159,10 +156,14 @@ fn check_collision(
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
     mut explosion_events: EventWriter<ExplosionEvent>,
+    mut wave_completed_events: EventWriter<WaveCompletedEvent>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands : Commands,
 ) {
+    if enemy_query.is_empty() { 
+        wave_completed_events.send_default();
+    }
     for (mut e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
         match e_enemy.state {
             EnemyState::Active => {
@@ -245,3 +246,5 @@ fn animate_explosion(
         }
     }
 }
+
+

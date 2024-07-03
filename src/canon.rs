@@ -132,15 +132,15 @@ fn move_canon(
         );
         let mut move_target = player_transform.translation;
         move_target.x += transform_x_dim;
-        let player_bb = Aabb2d::new(
+        let target_bb = Aabb2d::new(
             move_target.truncate(),
             player_transform.scale.truncate() / 2.
         );
-        if !canon_circle.intersects(&player_bb) { 
+        if !canon_circle.intersects(&target_bb) { 
             //move
             // let dir = Vec3::new(player_transform.translation.x - canon_transform.translation.x, player_transform.translation.y - canon_transform.translation.y, 0.0).normalize();
             let dir = (move_target - canon_transform.translation);
-            canon_transform.translation += dir * time.delta_seconds() * 2.;
+            canon_transform.translation += dir * time.delta_seconds() * 3.;
         }
     }
 }

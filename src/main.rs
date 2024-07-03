@@ -4,6 +4,7 @@ mod basic_enemy_move_patterns;
 mod camera;
 mod player;
 mod canon;
+mod level;
 pub mod beam;
 mod level_background;
 
