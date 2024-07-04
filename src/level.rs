@@ -8,10 +8,13 @@ impl Plugin for LevelPlugin {
        app
         .init_state::<Wave>()
         .init_state::<WaveState>()
+        .insert_resource(SpawnTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
         .add_systems(OnTransition {from: WaveState::Active, to: WaveState::Completed}, increment_state)
         .add_systems(Update, check_wave_complete)
         .add_systems(OnEnter(Wave::One), wave_one)
         .add_systems(OnEnter(Wave::Two), wave_two)
+        .add_systems(OnEnter(Wave::Three), wave_three)
+        .add_systems(Update, (spawn_horde).run_if(in_state(Wave::Three)))
        ;
     }
 }
@@ -62,7 +65,10 @@ fn increment_state(
 ) {
     match state.get() {
         Wave::None => {},
-        _ => next_state.set(state.next())
+        _ => {
+            next_state.set(state.next());
+            println!("STATE: {:?}", state);
+        }
     }
 }
 fn check_wave_complete(
@@ -163,4 +169,64 @@ fn wave_two (mut commands: Commands, asset_server: Res<AssetServer>, mut next_wa
         BasicEnemy::new(EnemyMovePattern::Basic),
         Wave::Two,
     ));
+}
+
+
+#[derive(Resource)]
+pub struct SpawnTimer(Timer);
+#[derive(Component, Debug)]
+pub struct WaveHordeCount {
+    count: i32,
+    max: i32,
+}
+impl WaveHordeCount {
+    pub fn new(max: i32) -> Self {
+        WaveHordeCount {
+            count: 0,
+            max: max,
+        }
+    }
+}
+fn wave_three (
+    mut commands: Commands, 
+    mut spawn_timer: ResMut<SpawnTimer>, 
+    mut next_wave_state: ResMut<NextState<WaveState>>
+) {
+    next_wave_state.set(WaveState::Active); //could schedule this
+    commands.spawn(WaveHordeCount::new(100));
+    spawn_timer.0.reset();
+}
+
+pub fn spawn_horde(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>, 
+    mut spawn_timer: ResMut<SpawnTimer>,
+    mut horde_count_query: Query<&mut WaveHordeCount>,
+    time: Res<Time>,
+) {
+    let mut horde_count = horde_count_query.get_single_mut();
+    match horde_count {
+        Ok(mut horde_count) => {
+            if horde_count.count <= horde_count.max {
+                if spawn_timer.0.tick(time.delta()).finished() {
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: asset_server.load("enemy_test.png"),
+                            transform: Transform::from_xyz(0., 400., 0.),
+                            ..default()
+                        },
+                        BasicEnemy::new(EnemyMovePattern::Down).shoot(false).health(1.),
+                        Wave::Three,
+                    ));
+                    spawn_timer.0.reset();
+                }
+                horde_count.count += 1;
+            } else {
+                
+            }
+        }
+        Err(err) => {
+            println!("err: {:?}", err);
+        }
+    }
 }

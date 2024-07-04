@@ -21,10 +21,12 @@ impl Plugin for BasicEnemyPlugin {
 
 #[derive(Component)]
 pub struct BasicEnemy {
-    pub direction: f32,
+    pub x_direction: f32,
+    pub y_direction: f32,
     health: f32,
     move_pattern: EnemyMovePattern,
     state: EnemyState,
+    shoot: bool,
 }
 #[derive(Component)]
 pub struct EnemyFire {
@@ -34,12 +36,18 @@ impl BasicEnemy {
     pub fn new(move_pattern: EnemyMovePattern) -> Self {
         BasicEnemy { 
             state: EnemyState::Active, 
-            direction : 1., 
+            x_direction : 1.,
+            y_direction : 0., 
             health: 100.,
             move_pattern: move_pattern,
+            shoot: true,
         }
     }
-    fn health(mut self, health: f32) -> Self {
+    pub fn shoot(mut self, shoot:bool) -> Self {
+        self.shoot = shoot;
+        self
+    }
+    pub fn health(mut self, health: f32) -> Self {
         self.health = health;
         self
     }
@@ -63,21 +71,28 @@ fn move_enemy(
             EnemyMovePattern::Basic => {
                 //simply flip direction depending on bounds
                 if transform.translation.x >= 600. {
-                    enemy.direction = -1.
+                    enemy.x_direction = -1.
                 } else if transform.translation.x <= -600. {
-                    enemy.direction = 1.
+                    enemy.x_direction = 1.
                 }
+                //now move enemy
+                let new_x_pos = 
+                    transform.translation.x + (ENEMY_SPEED * enemy.x_direction) * time.delta_seconds();
+                transform.translation.x = new_x_pos;
+            }
+            EnemyMovePattern::Down => {
+                enemy.x_direction = 0.;
+                enemy.y_direction = -1.;
+                let new_y_pos = 
+                transform.translation.y + (ENEMY_SPEED * enemy.y_direction) * time.delta_seconds();
+                transform.translation.y = new_y_pos;
             }
             EnemyMovePattern::StartShootGo => {
 
             }
         }
-        
 
-        //now move enemy
-        let new_pos = 
-            transform.translation.x + (ENEMY_SPEED * enemy.direction) * time.delta_seconds();
-        transform.translation.x = new_pos;
+        
             
     }
 }
