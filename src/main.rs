@@ -28,6 +28,7 @@ fn main() {
         .add_plugins((
                 DefaultPlugins, 
                 camera::GameCameraPlugin,
+                level::LevelPlugin,
                 level_background::LevelBackgroundPlugin,
                 basic_enemy::BasicEnemyPlugin, 
                 player::PlayerPlugin, 

@@ -1,6 +1,6 @@
-use bevy::{app::{App, Plugin}, ecs::entity, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
+use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::{basic_move, EnemyMovePattern}, beam::Beam, GameLevel, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -11,7 +11,7 @@ impl Plugin for BasicEnemyPlugin {
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
        .add_event::<CollisionEvent>()
        .add_event::<ExplosionEvent>()
-       .add_systems(OnEnter(GameLevel::SpaceOne), setup)
+    //    .add_systems(OnEnter(GameLevel::SpaceOne), setup)
        .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)))
        .add_systems(FixedUpdate, (animate_explosion))
        ;
@@ -24,14 +24,14 @@ pub struct BasicEnemy {
     pub direction: f32,
     health: f32,
     move_pattern: EnemyMovePattern,
-    state: EnemyState
+    state: EnemyState,
 }
 #[derive(Component)]
 pub struct EnemyFire {
     pub power: f32,
 }
 impl BasicEnemy {
-    fn new(move_pattern: EnemyMovePattern) -> Self {
+    pub fn new(move_pattern: EnemyMovePattern) -> Self {
         BasicEnemy { 
             state: EnemyState::Active, 
             direction : 1., 
@@ -53,34 +53,6 @@ pub struct CollisionEvent;
 
 #[derive(Resource)]
 struct ShootTimer(Timer);
-
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(0., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(-60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-    ));
-}
 
 fn move_enemy(
     mut query: Query<(&mut BasicEnemy, &mut Transform)>,
@@ -156,14 +128,11 @@ fn check_collision(
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
     mut explosion_events: EventWriter<ExplosionEvent>,
-    mut wave_completed_events: EventWriter<WaveCompletedEvent>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands : Commands,
 ) {
-    if enemy_query.is_empty() { 
-        wave_completed_events.send_default();
-    }
+
     for (mut e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
         match e_enemy.state {
             EnemyState::Active => {
