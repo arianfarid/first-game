@@ -25,6 +25,8 @@ pub struct Player {
     shield: f32,
     damaged_state: bool,
     pub front_weapon: WeaponType,
+    pub front_weapon_beam_type: BeamType,
+    pub front_weapon_needs_cooldown: bool,
     pub left_weapon: WeaponType,
     pub right_weapon: WeaponType,
 }
@@ -34,7 +36,9 @@ impl Default for Player {
             health: 100.,
             shield: 100.,
             damaged_state: false,
-            front_weapon: WeaponType::Wave,
+            front_weapon: WeaponType::WaveGun,
+            front_weapon_beam_type: BeamType::Wave,
+            front_weapon_needs_cooldown: false,
             left_weapon: WeaponType::PlasmaCanon,
             right_weapon: WeaponType::PlasmaCanon,
         }
@@ -45,8 +49,23 @@ impl Default for Player {
 pub enum WeaponType {
     #[default]
     None,
-    Wave,
+    WaveGun,
     PlasmaCanon
+}
+
+#[derive(Component, Resource)]
+pub struct FrontWeaponTimer(Timer);
+
+#[derive(Component)]
+pub struct WaveGun {
+    lockout_time: f32,
+}
+impl WaveGun {
+    fn new() -> Self {
+        WaveGun {
+            lockout_time: 0.15,
+        }
+    }
 }
 
 #[derive(Component, Debug)]
@@ -63,16 +82,24 @@ struct Acceleration {
 pub const USER_SPEED: f32 = 200.0;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-
+    let mut player = Player { ..Default::default() };
+    let weapon = match player.front_weapon {
+        WeaponType::WaveGun => (WaveGun::new()),
+        WeaponType::PlasmaCanon => (WaveGun::new()),
+        WeaponType::None => (WaveGun::new())
+    };
+    let weapon_lockout = weapon.lockout_time;
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("ship.png"),
             transform: Transform::from_xyz(100., 0., 0.),
             ..default()
         },
-        Player { ..Default::default() },
+        player,
+        weapon,
         Velocity {x: 0., y: 0.},
         Acceleration {x: 0., y: 0.},
+        FrontWeaponTimer(Timer::from_seconds(weapon_lockout, TimerMode::Once)),
     ));
 }
 
@@ -131,32 +158,42 @@ fn rotate_user(
 }
 
 fn user_fire_beam(
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut player_query: Query< (&mut Transform, &mut Player, &mut FrontWeaponTimer), With<Player>>,
     mouse_buttons:Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     asset_server: Res<AssetServer>,
+    time: Res<Time>,
     mut commands: Commands,
 ) {
-    let player_transform = player_query.single_mut();
-    let player_location = player_transform.translation;
-    let player_angle = player_transform.rotation;
-
-    // Convert to axis of rotation
-    let axis = (player_angle * Vec3::Y).xy();
-    
-    if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.pressed(MouseButton::Left) {
-        let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
-        spawn_transform.translation = player_location;
-        spawn_transform.rotation = player_angle;
-        commands.spawn((
-            SpriteBundle {
-                transform: spawn_transform,
-                texture: asset_server.load("wave.png"),
-                ..default()
-            },
-            //todo: 2 weapons, should be enum w/ params
-            Beam::new(BeamType::Proton, Vec2::new(axis.x, axis.y))
-        ));
+    let (player_transform, mut player, mut front_weapon_timer) = player_query.single_mut();
+    if front_weapon_timer.0.tick(time.delta()).finished() {
+        player.front_weapon_needs_cooldown = false;
+    }
+    match player.front_weapon_needs_cooldown {
+        true => {}
+        false => {
+            let player_location = player_transform.translation;
+            let player_angle = player_transform.rotation;
+            let axis = (player_angle * Vec3::Y).xy();
+            
+            if keyboard_input.pressed(KeyCode::Space) || mouse_buttons.pressed(MouseButton::Left) {
+                let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
+                spawn_transform.translation = player_location;
+                spawn_transform.rotation = player_angle;
+                front_weapon_timer.0.reset();
+                player.front_weapon_needs_cooldown = true;
+                let beam_type = &player.front_weapon_beam_type;
+                commands.spawn((
+                    SpriteBundle {
+                        transform: spawn_transform,
+                        texture: asset_server.load("wave.png"),
+                        ..default()
+                    },
+                    //todo: 2 weapons, should be enum w/ params
+                    Beam::new(beam_type, Vec2::new(axis.x, axis.y))
+                ));
+            }
+        }
     }
 }
 

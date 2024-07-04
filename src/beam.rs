@@ -18,7 +18,7 @@ pub struct Beam {
     pub power: f32,
 }
 impl Beam {
-    pub fn new(beam_type: BeamType, direction: Vec2) -> Beam {
+    pub fn new(beam_type: &BeamType, direction: Vec2) -> Beam {
         match beam_type {
             BeamType::Proton => {
                 Beam {
@@ -39,7 +39,7 @@ impl Beam {
             BeamType::Wave => {
                 Beam {
                     lifetime: 4.,
-                    speed: 500.,
+                    speed: 600.,
                     direction: direction,
                     power: 50.,
                 }
@@ -47,7 +47,7 @@ impl Beam {
             BeamType::PlasmaOrb => {
                 Beam {
                     lifetime: 4.,
-                    speed: 500.,
+                    speed: 600.,
                     direction: direction,
                     power: 50.,
                 }
@@ -56,6 +56,7 @@ impl Beam {
     }
 }
 
+#[derive(Debug)]
 pub enum BeamType {
     PlasmaOrb,
     Proton,

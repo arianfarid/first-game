@@ -43,7 +43,7 @@ impl Canon {
     }
 }
 #[derive(Component, Resource)]
-struct ShootTimer(Timer);
+pub struct ShootTimer(Timer);
 
 const CANON_ANIMATION_SPEED: f32 = 0.03;
 const CANON_DISTANCE: f32 = 20.;
@@ -168,7 +168,7 @@ fn fire_canon(
                     let mut spawn_transform = Transform::from_scale(Vec3::splat(1.0));
                     spawn_transform.translation = canon_location;
                     // spawn_transform.rotation = canon_angle;
-                    let plasma_orb = Beam:: new(BeamType::PlasmaOrb, Vec2::new(0., 1.));
+                    let plasma_orb = Beam::new(&BeamType::PlasmaOrb, Vec2::new(0., 1.));
                     canon.needs_cooldown = true;
                     shoot_timer.0.reset();
                     animation_timer.0.unpause();
