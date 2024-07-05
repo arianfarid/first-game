@@ -14,6 +14,7 @@ impl Plugin for LevelPlugin {
         .add_systems(OnEnter(Wave::One), wave_one)
         .add_systems(OnEnter(Wave::Two), wave_two)
         .add_systems(OnEnter(Wave::Three), wave_three)
+        .add_systems(OnEnter(Wave::Four), wave_four)
         .add_systems(Update, (spawn_horde).run_if(in_state(Wave::Three)))
        ;
     }
@@ -78,7 +79,7 @@ fn check_wave_complete(
 ) {
     //check enemy count
     if query.iter().count() < 1 {
-        next_wave_state.set(WaveState::Completed)
+        next_wave_state.set(WaveState::Completed);
     }
 }
 
@@ -229,4 +230,8 @@ pub fn spawn_horde(
             println!("err: {:?}", err);
         }
     }
+}
+
+fn wave_four() {
+    //
 }

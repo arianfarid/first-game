@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -63,10 +63,16 @@ pub struct CollisionEvent;
 struct ShootTimer(Timer);
 
 fn move_enemy(
-    mut query: Query<(&mut BasicEnemy, &mut Transform)>,
+    mut query: Query<(&mut BasicEnemy, &mut Transform, Entity)>,
+    player: Query<(&Transform), With<Player>>,
     time: Res<Time>,
+    mut commands: Commands,
 ) {
-    for (mut enemy, mut transform) in query.iter_mut() {
+    let player_translation_x = match player {
+        Ok(player) => player.translation.x,
+        Err(err) => 0.
+    };
+    for (mut enemy, mut transform, mut entity) in query.iter_mut() {
         match enemy.move_pattern {
             EnemyMovePattern::Basic => {
                 //simply flip direction depending on bounds
@@ -86,6 +92,18 @@ fn move_enemy(
                 let new_y_pos = 
                 transform.translation.y + (ENEMY_SPEED * enemy.y_direction) * time.delta_seconds();
                 transform.translation.y = new_y_pos;
+
+                // Track player
+                let dir = player_translation.x - transform.translation.x;
+                let dir = dir / dir.abs();
+                enemy.x_direction = dir;
+                let new_x_pos = 
+                    transform.translation.x + (ENEMY_SPEED / 2. * enemy.x_direction) * time.delta_seconds();
+                transform.translation.x = new_x_pos;
+
+                if new_y_pos < -100. {
+                    commands.entity(entity).despawn();
+                }
             }
             EnemyMovePattern::StartShootGo => {
 
