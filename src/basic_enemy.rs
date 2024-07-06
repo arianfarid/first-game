@@ -1,4 +1,4 @@
-use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
+use bevy::{app::{App, Plugin}, ecs::query::QueryEntityError, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
 use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, player::Player, GameState};
 
@@ -64,13 +64,13 @@ struct ShootTimer(Timer);
 
 fn move_enemy(
     mut query: Query<(&mut BasicEnemy, &mut Transform, Entity)>,
-    player: Query<(&Transform), With<Player>>,
+    player: Query<(&Transform), (With<Player>, Without<BasicEnemy>)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    let player_translation_x = match player {
-        Ok(player) => player.translation.x,
-        Err(err) => 0.
+    let player_translation_x =  match player.get_single() {
+        Ok(p) => p.translation.x,
+        _ => 0.,
     };
     for (mut enemy, mut transform, mut entity) in query.iter_mut() {
         match enemy.move_pattern {
@@ -94,7 +94,7 @@ fn move_enemy(
                 transform.translation.y = new_y_pos;
 
                 // Track player
-                let dir = player_translation.x - transform.translation.x;
+                let dir = player_translation_x - transform.translation.x;
                 let dir = dir / dir.abs();
                 enemy.x_direction = dir;
                 let new_x_pos = 
