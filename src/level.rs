@@ -205,10 +205,10 @@ pub fn spawn_horde(
     mut horde_count_query: Query<&mut WaveHordeCount>,
     time: Res<Time>,
 ) {
-    let mut horde_count = horde_count_query.get_single_mut();
+    let horde_count = horde_count_query.get_single_mut();
     match horde_count {
         Ok(mut horde_count) => {
-            if horde_count.count <= horde_count.max {
+            if horde_count.count < horde_count.max {
                 if spawn_timer.0.tick(time.delta()).finished() {
                     commands.spawn((
                         SpriteBundle {
@@ -227,7 +227,7 @@ pub fn spawn_horde(
             }
         }
         Err(err) => {
-            println!("err: {:?}", err);
+            eprintln!("err: {:?}", err);
         }
     }
 }
