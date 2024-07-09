@@ -1,7 +1,7 @@
 
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{basic_enemy::EnemyFire, beam::{Beam, BeamType}, camera::MainCamera, canon::CanonPlugin, collision_core::CollisionEvent, GameLevel, GameState};
+use crate::{basic_enemy::EnemyFire, beam::{Beam, BeamType}, camera::{MainCamera, CameraShakeEvent}, canon::CanonPlugin, collision_core::CollisionEvent, GameLevel, GameState};
 
 pub struct PlayerPlugin;
 
@@ -216,6 +216,7 @@ fn check_collision(
     mut player_query: Query<(&Transform, &mut Player, Entity), With<Player>>,
     mut enemy_fire_query: Query<(&Transform, &mut EnemyFire), With<EnemyFire>>,
     mut collision_events: EventWriter<CollisionEvent>,
+    mut camera_shake_events: EventWriter<CameraShakeEvent>,
 ) {
     let (player_transform, mut player, entity) = player_query.single_mut();
     for (enemy_fire_transform, fire) in enemy_fire_query.iter_mut() {
@@ -237,6 +238,7 @@ fn check_collision(
                 player.shield = 0.;
                 player.health -= from_health;
                 collision_events.send(CollisionEvent(entity));
+                camera_shake_events.send(CameraShakeEvent);
             } else {
                 player.health -= fire.power;
             }

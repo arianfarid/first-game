@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 mod basic_enemy;
 mod basic_enemy_move_patterns;
-mod camera;
+pub mod camera;
 mod canon;
 mod collision_core;
-mod player;
+pub mod player;
 mod level;
 pub mod beam;
 mod level_background;
-pub mod Player;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 pub enum GameState {

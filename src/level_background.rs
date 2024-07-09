@@ -38,7 +38,7 @@ fn animate_bg(
     time: Res<Time>,
     mut query: Query<(&mut BackgroundTile, &mut Transform, Entity)>
 ) {
-    for (tile, mut transform, entity) in query.iter_mut() {
+    for (_tile, mut transform, entity) in query.iter_mut() {
         // //despawn tile if out out of view
         // //using hard-coded dims now, but should query window size or set hard window size
         if transform.translation.y <= -TILE_Y_BOUND {

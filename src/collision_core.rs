@@ -24,7 +24,6 @@ pub fn collision (
 ) {
     if !collision_events.is_empty() {
         for event in collision_events.read() {
-            println!("COLLISION EVENT: {:?}", event.0);
             match commands.get_entity(event.0) {
                 Some(_) => {
                     commands.entity(event.0).insert(Blinking(Timer::from_seconds(BLINK_DURATION, TimerMode::Once)));
