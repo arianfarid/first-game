@@ -1,6 +1,6 @@
-use bevy::{app::{App, Plugin}, ecs::{query::QueryEntityError, system::EntityCommands}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
+use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, player::Player, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -9,11 +9,10 @@ impl Plugin for BasicEnemyPlugin {
     fn build(&self, app: &mut App) {
        app
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-       .add_event::<CollisionEvent>()
        .add_event::<ExplosionEvent>()
     //    .add_systems(OnEnter(GameLevel::SpaceOne), setup)
-       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision, collision).chain().run_if(in_state(GameState::Playing)))
-       .add_systems(FixedUpdate, (blink, animate_explosion).chain())
+       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)))
+       .add_systems(FixedUpdate, (animate_explosion).chain())
        ;
 
     }
@@ -56,8 +55,7 @@ enum EnemyState {
     Active,
     Dead,
 }
-#[derive(Event)]
-pub struct CollisionEvent(Entity);
+
 
 #[derive(Resource)]
 struct ShootTimer(Timer);
@@ -72,7 +70,7 @@ fn move_enemy(
         Ok(p) => p.translation.x,
         _ => 0.,
     };
-    for (mut enemy, mut transform, mut entity) in query.iter_mut() {
+    for (mut enemy, mut transform, entity) in query.iter_mut() {
         match enemy.move_pattern {
             EnemyMovePattern::Basic => {
                 //simply flip direction depending on bounds
@@ -246,45 +244,6 @@ fn animate_explosion(
             else {
                 atlas.index += 1;
             };
-        }
-    }
-}
-
-
-#[derive(Component, Resource)]
-struct Blinking(Timer);
-const BLINK_DURATION: f32 = 0.35;
-
-fn collision (
-    mut commands: Commands,
-    mut collision_events: EventReader<(CollisionEvent)>,
-) {
-    if !collision_events.is_empty() {
-        for mut event in collision_events.read() {
-            println!("COLLISION EVENT: {:?}", event.0);
-            match commands.get_entity(event.0) {
-                Some(_) => {
-                    commands.entity(event.0).insert(Blinking(Timer::from_seconds(BLINK_DURATION, TimerMode::Once)));
-                },
-                None => {}
-            }
-        }
-    }
-}
-
-
-fn blink (
-    mut commands: Commands,
-    mut enemy_query: Query<(&mut Blinking, &mut Sprite, Entity), With<BasicEnemy>>,
-    time: Res<Time>,
-) {
-    for (mut blinking_timer, mut sprite, mut entity) in enemy_query.iter_mut() {
-        
-        let blinking_timer = blinking_timer.0.tick(time.delta());
-        sprite.color = Color::rgba(255., 255., 255., 1.);
-        if blinking_timer.finished() {
-            sprite.color = Color::rgba(1., 1., 1., 1.);
-            commands.entity(entity).remove::<Blinking>();
         }
     }
 }

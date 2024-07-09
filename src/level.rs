@@ -73,7 +73,6 @@ fn increment_state(
     }
 }
 fn check_wave_complete(
-    state: Res<State<Wave>>,
     query: Query<&Wave>,
     mut next_wave_state: ResMut<NextState<WaveState>>
 ) {

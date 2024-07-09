@@ -2,11 +2,13 @@ use bevy::prelude::*;
 mod basic_enemy;
 mod basic_enemy_move_patterns;
 mod camera;
-mod player;
 mod canon;
+mod collision_core;
+mod player;
 mod level;
 pub mod beam;
 mod level_background;
+pub mod Player;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 pub enum GameState {
@@ -28,6 +30,7 @@ fn main() {
         .add_plugins((
                 DefaultPlugins, 
                 camera::GameCameraPlugin,
+                collision_core::CollisionCorePlugin,
                 level::LevelPlugin,
                 level_background::LevelBackgroundPlugin,
                 basic_enemy::BasicEnemyPlugin, 

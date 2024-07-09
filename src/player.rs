@@ -1,7 +1,7 @@
 
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{GameState, GameLevel, basic_enemy::{EnemyFire}, beam::{Beam, BeamType}, camera::{MainCamera}, canon::{CanonPlugin}};
+use crate::{basic_enemy::EnemyFire, beam::{Beam, BeamType}, camera::MainCamera, canon::CanonPlugin, collision_core::CollisionEvent, GameLevel, GameState};
 
 pub struct PlayerPlugin;
 
@@ -13,7 +13,7 @@ impl Plugin for PlayerPlugin {
        .add_systems(Update, (toggle_pause))
        .add_systems(
             Update, 
-            (toggle_pause, move_user, rotate_user, user_fire_beam)
+            (toggle_pause, move_user, check_collision, rotate_user, user_fire_beam)
                 .chain().run_if(in_state(GameState::Playing))
         );
     }
@@ -212,12 +212,12 @@ fn toggle_pause(
 }
 
 fn check_collision(
-    commands: Commands,
-    mut player_query: Query<(&Transform, &mut Player), With<Player>>,
+    mut commands: Commands,
+    mut player_query: Query<(&Transform, &mut Player, Entity), With<Player>>,
     mut enemy_fire_query: Query<(&Transform, &mut EnemyFire), With<EnemyFire>>,
-    // mut collision_events: EventWriter<CollisionEvent>,
+    mut collision_events: EventWriter<CollisionEvent>,
 ) {
-    let (player_transform, mut player) = player_query.single_mut();
+    let (player_transform, mut player, entity) = player_query.single_mut();
     for (enemy_fire_transform, fire) in enemy_fire_query.iter_mut() {
         let pcircle = BoundingCircle::new(
             player_transform.translation.truncate(),
@@ -236,6 +236,7 @@ fn check_collision(
                 //need val to roll over into health
                 player.shield = 0.;
                 player.health -= from_health;
+                collision_events.send(CollisionEvent(entity));
             } else {
                 player.health -= fire.power;
             }

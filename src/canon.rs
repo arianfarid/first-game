@@ -1,6 +1,6 @@
 use bevy::{math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{beam::{Beam, BeamType}, player::{Player, WeaponType, USER_SPEED}, GameState};
+use crate::{beam::{Beam, BeamType}, player::{Player, WeaponType}, GameState};
 
 pub struct CanonPlugin;
 
@@ -192,7 +192,6 @@ struct AnimationTimer(Timer);
 
 fn animate_canon(
     time: Res<Time>,
-    mut commands: Commands,
     mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas), (With<Canon>)>,
 ) {
     for (indices, 
