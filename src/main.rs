@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::WindowResolution};
 mod basic_enemy;
 mod basic_enemy_move_patterns;
 pub mod camera;
@@ -27,7 +27,17 @@ pub enum GameLevel {
 fn main() {
     App::new()
         .add_plugins((
-                DefaultPlugins, 
+                DefaultPlugins.set(
+                    // here we configure the main window
+                    WindowPlugin {
+                        primary_window: Some(Window {
+                            resolution: WindowResolution::new(1200.0, 800.0),
+                            // ...
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }
+                ), 
                 camera::GameCameraPlugin,
                 collision_core::CollisionCorePlugin,
                 level::LevelPlugin,
