@@ -48,6 +48,7 @@ fn spawn_explosion(
 
 ) {
     if !explosion_events.is_empty() {
+        println!("TEST EXPL");
         for event in explosion_events.read() {
             let texture = asset_server.load("test_explosion.png");
             let layout = TextureAtlasLayout::from_grid(Vec2::new(24.0, 24.0), 5, 1, None, None);

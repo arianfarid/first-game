@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, explosion_core::ExplosionEvent, player::Player, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, explosion_core::{ExplosionCorePlugin, ExplosionEvent}, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -159,7 +159,7 @@ fn check_collision(
     mut enemy_query: Query<(Entity, &Transform, &mut BasicEnemy), With<BasicEnemy>>,
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
-    explosion_events: EventWriter<ExplosionEvent>,
+    mut explosion_events: EventWriter<ExplosionEvent>,
     mut commands : Commands,
 ) {
 
@@ -184,7 +184,7 @@ fn check_collision(
                     e_enemy.state = EnemyState::Dead;
                     let mut explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
                     explosion_transform.scale = Vec3::new(2., 2., 2.);
-                    // explosion_events.send(ExplosionEvent(explosion_transform)); //sound?
+                    explosion_events.send(ExplosionEvent(explosion_transform)); //sound?
                     commands.entity(e_entity).despawn();
                 }
             }

@@ -41,6 +41,7 @@ fn main() {
                 ), 
                 camera::GameCameraPlugin,
                 collision_core::CollisionCorePlugin,
+                explosion_core::ExplosionCorePlugin,
                 level::LevelPlugin,
                 level_background::LevelBackgroundPlugin,
                 basic_enemy::BasicEnemyPlugin, 
