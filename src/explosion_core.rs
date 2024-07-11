@@ -1,4 +1,4 @@
-use bevy::{app::{App, FixedUpdate, Plugin, Update}, asset::{AssetServer, Assets}, math::Vec2, prelude::{default, Bundle, Commands, Component, Deref, DerefMut, Entity, Event, EventReader, IntoSystemConfigs, Query, Res, ResMut, With}, sprite::{SpriteSheetBundle, TextureAtlas, TextureAtlasLayout}, time::{Time, Timer, TimerMode}, transform::components::Transform};
+use bevy::{app::{App, FixedUpdate, Plugin, Update}, asset::{AssetServer, Assets}, math::Vec2, prelude::{default, Bundle, Commands, Component, Deref, DerefMut, Entity, Event, EventReader, IntoSystemConfigs, Query, Res, ResMut, With}, render::color::Color, sprite::{Sprite, SpriteSheetBundle, TextureAtlas, TextureAtlasLayout}, time::{Time, Timer, TimerMode}, transform::components::Transform};
 
 pub struct ExplosionCorePlugin;
 impl Plugin for ExplosionCorePlugin {
@@ -10,6 +10,11 @@ impl Plugin for ExplosionCorePlugin {
         ;
     }
 }
+
+const EXPLOSION_CORE_COLS: usize =5;
+const EXPLOSION_CORE_ROWS: usize = 1;
+const EXPLOSION_CORE_X: f32 = 50.;
+const EXPLOSION_CORE_Y: f32 = 50.;
 
 #[derive(Default, Debug, Event)]
 pub struct ExplosionEvent(pub Transform);
@@ -48,10 +53,9 @@ fn spawn_explosion(
 
 ) {
     if !explosion_events.is_empty() {
-        println!("TEST EXPL");
         for event in explosion_events.read() {
-            let texture = asset_server.load("test_explosion.png");
-            let layout = TextureAtlasLayout::from_grid(Vec2::new(24.0, 24.0), 5, 1, None, None);
+            let texture = asset_server.load("explosion_core.png");
+            let layout = TextureAtlasLayout::from_grid(Vec2::new(EXPLOSION_CORE_X, EXPLOSION_CORE_Y), EXPLOSION_CORE_COLS, EXPLOSION_CORE_ROWS, None, None);
             let texture_atlas_layout = texture_atlas_layouts.add(layout);
             let explosion_bundle = ExplosionBundle::default();
             let explosion_transform = event.0;
@@ -74,11 +78,12 @@ fn spawn_explosion(
 fn animate_explosion(
     time: Res<Time>,
     mut commands: Commands,
-    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas, Entity), With<Explosion>>,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas, &mut Sprite, Entity), With<Explosion>>,
 ) {
     for (indices, 
         mut timer, 
         mut atlas, 
+        mut sprite,
         entity) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
@@ -87,6 +92,7 @@ fn animate_explosion(
             }
             else {
                 atlas.index += 1;
+                sprite.color = Color::rgba(1., 1., 1., sprite.color.a() - (sprite.color.a() / EXPLOSION_CORE_COLS as f32))
             };
         }
     }

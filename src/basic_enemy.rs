@@ -176,14 +176,13 @@ fn check_collision(
                     if ecircle.intersects(&b_box) {
                         collision_events.send(CollisionEvent(e_entity));
                         e_enemy.health -= beam.power;
-                        // commands.entity(entity).insert(Blinking(Timer::from_seconds(BLINK_DURATION, TimerMode::Once)));
                         commands.entity(b_entity).despawn();
                     }
                 }
                 if e_enemy.health < 1. {
                     e_enemy.state = EnemyState::Dead;
                     let mut explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
-                    explosion_transform.scale = Vec3::new(2., 2., 2.);
+                    // explosion_transform.scale = Vec3::new(2., 2., 2.);
                     explosion_events.send(ExplosionEvent(explosion_transform)); //sound?
                     commands.entity(e_entity).despawn();
                 }
