@@ -8,8 +8,9 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
        app
-       .add_plugins(CanonPlugin)
        .add_systems(OnEnter(GameLevel::SpaceOne), setup)
+       .init_state::<PlayerState>()
+       .add_plugins((CanonPlugin))
        .add_systems(Update, toggle_pause)
        .add_systems(
             Update, 
@@ -17,6 +18,13 @@ impl Plugin for PlayerPlugin {
                 .chain().run_if(in_state(GameState::Playing))
         );
     }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+pub enum PlayerState {
+    #[default]
+    Setup,
+    Spawned,
 }
 
 #[derive(Component, Debug)]
@@ -81,7 +89,7 @@ struct Acceleration {
 }
 pub const USER_SPEED: f32 = 200.0;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut player_state: ResMut<NextState<PlayerState>>) {
     let player = Player { ..Default::default() };
     let weapon = match player.front_weapon {
         WeaponType::WaveGun => WaveGun::new(),
@@ -101,6 +109,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Acceleration {x: 0., y: 0.},
         FrontWeaponTimer(Timer::from_seconds(weapon_lockout, TimerMode::Once)),
     ));
+    player_state.set(PlayerState::Spawned);
 }
 
 fn move_user(

@@ -1,13 +1,13 @@
 use bevy::{math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{beam::{Beam, BeamType}, player::{Player, WeaponType}, GameState};
+use crate::{beam::{Beam, BeamType}, player::{Player, PlayerState, WeaponType}, GameState};
 
 pub struct CanonPlugin;
 
 impl Plugin for CanonPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_systems(OnEnter(GameState::Playing), setup)
+        .add_systems(OnEnter(PlayerState::Spawned ), setup)
         .add_systems(
             Update,
              (move_canon, fire_canon).chain().run_if(in_state(GameState::Playing))
@@ -62,58 +62,56 @@ fn setup(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 
 ) {
-    if let Ok(player_query) = player_query.get_single_mut() {
-        let (player_transform, player) = player_query;
-        if player.left_weapon == WeaponType::PlasmaCanon {
-            let texture = asset_server.load("cannon.png");
-            let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
-            let texture_atlas_layout = texture_atlas_layouts.add(layout);
-            let animation_indices = AnimationIndices { first: 0, last: 3 };
-            let canon = Canon::new(0, Position::Left); 
-            let canon_lockout = canon.lockout_time;
-            let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
-            animation_timer.0.pause();
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: texture,
-                    atlas: TextureAtlas {
-                        layout: texture_atlas_layout,
-                        index: animation_indices.first,
-                    },
-                    transform: Transform::from_xyz(player_transform.translation.x - CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
-                    ..default()
+    let (player_transform, player) = player_query.single_mut();
+    if player.left_weapon == WeaponType::PlasmaCanon {
+        let texture = asset_server.load("cannon.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
+        let texture_atlas_layout = texture_atlas_layouts.add(layout);
+        let animation_indices = AnimationIndices { first: 0, last: 3 };
+        let canon = Canon::new(0, Position::Left); 
+        let canon_lockout = canon.lockout_time;
+        let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
+        animation_timer.0.pause();
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
                 },
-                canon,
-                animation_indices,
-                ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
-                animation_timer,
-            ));
-        }
-        if player.right_weapon == WeaponType::PlasmaCanon {
-            let texture = asset_server.load("cannon.png");
-            let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
-            let texture_atlas_layout = texture_atlas_layouts.add(layout);
-            let animation_indices = AnimationIndices { first: 0, last: 3 };
-            let canon = Canon::new(0, Position::Right); 
-            let canon_lockout = canon.lockout_time;
-            let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
-            animation_timer.0.pause();
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: texture,
-                    atlas: TextureAtlas {
-                        layout: texture_atlas_layout,
-                        index: animation_indices.first,
-                    },
-                    transform: Transform::from_xyz(player_transform.translation.x + CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
-                    ..default()
+                transform: Transform::from_xyz(player_transform.translation.x - CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
+                ..default()
+            },
+            canon,
+            animation_indices,
+            ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
+            animation_timer,
+        ));
+    }
+    if player.right_weapon == WeaponType::PlasmaCanon {
+        let texture = asset_server.load("cannon.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(21., CANON_HEIGHT), 4, 1, None, None);
+        let texture_atlas_layout = texture_atlas_layouts.add(layout);
+        let animation_indices = AnimationIndices { first: 0, last: 3 };
+        let canon = Canon::new(0, Position::Right); 
+        let canon_lockout = canon.lockout_time;
+        let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
+        animation_timer.0.pause();
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
                 },
-                canon,
-                animation_indices,
-                ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
-                animation_timer,
-            ));
-        }
+                transform: Transform::from_xyz(player_transform.translation.x + CANON_DISTANCE, player_transform.translation.y, player_transform.translation.z),
+                ..default()
+            },
+            canon,
+            animation_indices,
+            ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
+            animation_timer,
+        ));
     }
 }
 
