@@ -4,6 +4,7 @@ mod basic_enemy_move_patterns;
 pub mod camera;
 mod canon;
 mod collision_core;
+pub mod explosion_core;
 pub mod player;
 mod level;
 pub mod beam;

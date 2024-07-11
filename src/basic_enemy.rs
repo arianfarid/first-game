@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, player::Player, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, explosion_core::ExplosionEvent, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -9,10 +9,11 @@ impl Plugin for BasicEnemyPlugin {
     fn build(&self, app: &mut App) {
        app
        .insert_resource(ShootTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-       .add_event::<ExplosionEvent>()
-    //    .add_systems(OnEnter(GameLevel::SpaceOne), setup)
-       .add_systems(Update, (move_enemy, enemy_fire, animate_beams, check_collision).chain().run_if(in_state(GameState::Playing)))
-       .add_systems(FixedUpdate, (animate_explosion).chain())
+       .add_systems(Update, 
+        (move_enemy, enemy_fire, animate_beams, check_collision)
+                .chain()
+                .run_if(in_state(GameState::Playing))
+        )
        ;
 
     }
@@ -159,8 +160,6 @@ fn check_collision(
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
     mut explosion_events: EventWriter<ExplosionEvent>,
-    asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands : Commands,
 ) {
 
@@ -181,30 +180,12 @@ fn check_collision(
                         commands.entity(b_entity).despawn();
                     }
                 }
-                if (e_enemy.health < 1.) {
+                if e_enemy.health < 1. {
                     e_enemy.state = EnemyState::Dead;
-                    explosion_events.send_default(); //sound?
-                    let texture = asset_server.load("test_explosion.png");
-                    let layout = TextureAtlasLayout::from_grid(Vec2::new(24.0, 24.0), 5, 1, None, None);
-                    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-                    let animation_indices = AnimationIndices { first: 0, last: 4 };
                     let mut explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
                     explosion_transform.scale = Vec3::new(2., 2., 2.);
+                    // explosion_events.send(ExplosionEvent(explosion_transform)); //sound?
                     commands.entity(e_entity).despawn();
-                    commands.spawn((
-                        SpriteSheetBundle {
-                            texture,
-                            atlas: TextureAtlas {
-                                layout: texture_atlas_layout,
-                                index: animation_indices.first,
-                            },
-                            transform: explosion_transform,
-                            ..default()
-                        },
-                        Explosion,
-                        animation_indices,
-                        AnimationTimer(Timer::from_seconds(0.12, TimerMode::Repeating)),
-                    ));
                 }
             }
             EnemyState::Dead => {
@@ -212,38 +193,5 @@ fn check_collision(
             }
         }
         
-    }
-}
-
-#[derive(Event, Default, Debug)]
-struct ExplosionEvent;
-#[derive(Component, Deref, DerefMut)]
-struct AnimationTimer(Timer);
-#[derive(Component)]
-struct AnimationIndices {
-    first: usize,
-    last: usize,
-}
-#[derive(Component)]
-struct Explosion;
-
-fn animate_explosion(
-    time: Res<Time>,
-    mut commands: Commands,
-    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas, Entity), With<Explosion>>,
-) {
-    for (indices, 
-        mut timer, 
-        mut atlas, 
-        entity) in &mut query {
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            if atlas.index == indices.last {
-                commands.entity(entity).despawn();
-            }
-            else {
-                atlas.index += 1;
-            };
-        }
     }
 }
