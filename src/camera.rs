@@ -32,7 +32,7 @@ const CAMERA_SHAKE_WIDTH: f32 = 100.;
 pub fn shake_camera_event (
     mut commands: Commands,
     mut camera_query: Query<Entity, With<MainCamera>>,
-    mut camera_shake_events: EventReader<(CameraShakeEvent)>
+    mut camera_shake_events: EventReader<CameraShakeEvent>
 ) {
     if !camera_shake_events.is_empty() {
         for _event in camera_shake_events.read() {
@@ -44,7 +44,7 @@ pub fn shake_camera_event (
 
  pub fn shake_camera (
     mut commands: Commands,
-    mut camera_query: Query<(&mut Transform, &mut CameraShake, Entity), With<(CameraShake)>>,
+    mut camera_query: Query<(&mut Transform, &mut CameraShake, Entity), With<CameraShake>>,
     time: Res<Time>,
  ) {
     let camera_query = camera_query.get_single_mut();

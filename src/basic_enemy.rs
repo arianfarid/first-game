@@ -63,7 +63,7 @@ struct ShootTimer(Timer);
 
 fn move_enemy(
     mut query: Query<(&mut BasicEnemy, &mut Transform, Entity)>,
-    player: Query<(&Transform), (With<Player>, Without<BasicEnemy>)>,
+    player: Query<&Transform, (With<Player>, Without<BasicEnemy>)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
@@ -159,11 +159,11 @@ fn check_collision(
     mut enemy_query: Query<(Entity, &Transform, &mut BasicEnemy), With<BasicEnemy>>,
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
-    mut explosion_events: EventWriter<ExplosionEvent>,
+    explosion_events: EventWriter<ExplosionEvent>,
     mut commands : Commands,
 ) {
 
-    for (mut e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
+    for (e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
         match e_enemy.state {
             EnemyState::Active => {
                 let ecircle = 
@@ -174,7 +174,7 @@ fn check_collision(
                     let b_box = 
                         Aabb2d::new(b_transform.translation.truncate(), b_transform.scale.truncate() / 2.);
                     if ecircle.intersects(&b_box) {
-                        collision_events.send((CollisionEvent(e_entity)));
+                        collision_events.send(CollisionEvent(e_entity));
                         e_enemy.health -= beam.power;
                         // commands.entity(entity).insert(Blinking(Timer::from_seconds(BLINK_DURATION, TimerMode::Once)));
                         commands.entity(b_entity).despawn();

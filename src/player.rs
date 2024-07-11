@@ -9,8 +9,8 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
        app
        .add_plugins(CanonPlugin)
-       .add_systems(OnEnter((GameLevel::SpaceOne)), setup)
-       .add_systems(Update, (toggle_pause))
+       .add_systems(OnEnter(GameLevel::SpaceOne), setup)
+       .add_systems(Update, toggle_pause)
        .add_systems(
             Update, 
             (toggle_pause, move_user, check_collision, rotate_user, user_fire_beam)
@@ -82,11 +82,11 @@ struct Acceleration {
 pub const USER_SPEED: f32 = 200.0;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let mut player = Player { ..Default::default() };
+    let player = Player { ..Default::default() };
     let weapon = match player.front_weapon {
-        WeaponType::WaveGun => (WaveGun::new()),
-        WeaponType::PlasmaCanon => (WaveGun::new()),
-        WeaponType::None => (WaveGun::new())
+        WeaponType::WaveGun => WaveGun::new(),
+        WeaponType::PlasmaCanon => WaveGun::new(),
+        WeaponType::None => WaveGun::new()
     };
     let weapon_lockout = weapon.lockout_time;
     commands.spawn((
@@ -105,7 +105,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn move_user(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform), With<Player>>,
+    mut query: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
 ) {
     let mut player_transform = query.single_mut();
@@ -212,7 +212,7 @@ fn toggle_pause(
 }
 
 fn check_collision(
-    mut commands: Commands,
+    commands: Commands,
     mut player_query: Query<(&Transform, &mut Player, Entity), With<Player>>,
     mut enemy_fire_query: Query<(&Transform, &mut EnemyFire), With<EnemyFire>>,
     mut collision_events: EventWriter<CollisionEvent>,

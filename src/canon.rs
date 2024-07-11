@@ -7,7 +7,7 @@ pub struct CanonPlugin;
 impl Plugin for CanonPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_systems((OnEnter((GameState::Playing))), setup)
+        .add_systems(OnEnter(GameState::Playing), setup)
         .add_systems(
             Update,
              (move_canon, fire_canon).chain().run_if(in_state(GameState::Playing))
@@ -118,7 +118,7 @@ fn setup(
 }
 
 fn move_canon(
-    mut player_query: Query<(&Transform), With<Player>>,
+    mut player_query: Query<&Transform, With<Player>>,
     time:Res<Time>,
     mut canons: Query<(&mut Transform, &Canon), (With<Canon>, Without<Player>)>,
 ) {
@@ -141,7 +141,7 @@ fn move_canon(
         if !canon_circle.intersects(&target_bb) { 
             //move
             // let dir = Vec3::new(player_transform.translation.x - canon_transform.translation.x, player_transform.translation.y - canon_transform.translation.y, 0.0).normalize();
-            let dir = (move_target - canon_transform.translation);
+            let dir = move_target - canon_transform.translation;
             canon_transform.translation += dir * time.delta_seconds() * 3.;
         }
     }
@@ -194,7 +194,7 @@ struct AnimationTimer(Timer);
 
 fn animate_canon(
     time: Res<Time>,
-    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas), (With<Canon>)>,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas), With<Canon>>,
 ) {
     for (indices, 
         mut animation_timer, 

@@ -20,7 +20,7 @@ pub const BLINK_DURATION: f32 = 0.35;
 
 pub fn collision (
     mut commands: Commands,
-    mut collision_events: EventReader<(CollisionEvent)>,
+    mut collision_events: EventReader<CollisionEvent>,
 ) {
     if !collision_events.is_empty() {
         for event in collision_events.read() {
