@@ -7,12 +7,19 @@ pub struct CanonPlugin;
 impl Plugin for CanonPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_systems(OnEnter(PlayerState::Spawned ), setup)
+        .add_systems(OnEnter(PlayerState::Spawned), setup)
         .add_systems(
             Update,
-             (move_canon, fire_canon).chain().run_if(in_state(GameState::Playing))
+             (move_canon, fire_canon)
+                        .chain()
+                        .run_if(in_state(GameState::Playing))
+                        .run_if(in_state(PlayerState::Spawned))
         )
-        .add_systems(FixedUpdate, (animate_canon).after(fire_canon))
+        .add_systems(FixedUpdate, 
+            (animate_canon)
+            .run_if(in_state(PlayerState::Spawned))
+            .after(fire_canon)
+        )
         ;
     }
 }
@@ -72,7 +79,7 @@ fn setup(
         let canon_lockout = canon.lockout_time;
         let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
         animation_timer.0.pause();
-        commands.spawn((
+        let left = commands.spawn((
             SpriteSheetBundle {
                 texture: texture,
                 atlas: TextureAtlas {
@@ -86,7 +93,7 @@ fn setup(
             animation_indices,
             ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
             animation_timer,
-        ));
+        )).id();
     }
     if player.right_weapon == WeaponType::PlasmaCanon {
         let texture = asset_server.load("cannon.png");

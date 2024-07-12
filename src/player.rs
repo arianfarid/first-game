@@ -1,7 +1,16 @@
 
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 use bevy::window::PrimaryWindow;
-use crate::{basic_enemy::EnemyFire, beam::{Beam, BeamType}, camera::{MainCamera, CameraShakeEvent}, canon::CanonPlugin, collision_core::CollisionEvent, GameLevel, GameState};
+use crate::{
+    basic_enemy::EnemyFire, 
+    beam::{Beam, BeamType}, 
+    camera::{MainCamera, CameraShakeEvent}, 
+    canon::CanonPlugin, 
+    collision_core::CollisionEvent, 
+    explosion_core::ExplosionEvent,
+    GameLevel, 
+    GameState
+};
 
 pub struct PlayerPlugin;
 
@@ -9,13 +18,16 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
        app
        .add_systems(OnEnter(GameLevel::SpaceOne), setup)
+       .add_systems(OnEnter(PlayerState::Dead), destroy_player)
        .init_state::<PlayerState>()
-       .add_plugins((CanonPlugin))
-       .add_systems(Update, toggle_pause)
+       .add_plugins(CanonPlugin)
+       .add_systems(Update, (toggle_pause, despawn))
        .add_systems(
             Update, 
             (toggle_pause, move_user, check_collision, rotate_user, user_fire_beam)
-                .chain().run_if(in_state(GameState::Playing))
+                .chain()
+                .run_if(in_state(GameState::Playing))
+                .run_if(in_state(PlayerState::Spawned))
         );
     }
 }
@@ -25,13 +37,15 @@ pub enum PlayerState {
     #[default]
     Setup,
     Spawned,
+    Dead,
 }
+#[derive(Component, Resource)]
+pub struct DespawnTimer(Timer);
 
 #[derive(Component, Debug)]
 pub struct Player {
     health: f32,
     shield: f32,
-    damaged_state: bool,
     pub front_weapon: WeaponType,
     pub front_weapon_beam_type: BeamType,
     pub front_weapon_needs_cooldown: bool,
@@ -43,7 +57,6 @@ impl Default for Player {
         Player {
             health: 100.,
             shield: 100.,
-            damaged_state: false,
             front_weapon: WeaponType::WaveGun,
             front_weapon_beam_type: BeamType::Wave,
             front_weapon_needs_cooldown: false,
@@ -89,7 +102,11 @@ struct Acceleration {
 }
 pub const USER_SPEED: f32 = 200.0;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut player_state: ResMut<NextState<PlayerState>>) {
+fn setup(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>, 
+    mut player_state: ResMut<NextState<PlayerState>>
+) {
     let player = Player { ..Default::default() };
     let weapon = match player.front_weapon {
         WeaponType::WaveGun => WaveGun::new(),
@@ -206,10 +223,31 @@ fn user_fire_beam(
     }
 }
 
+fn destroy_player(
+    mut commands: Commands,
+    mut player_query: Query<(&mut Transform, Entity, &mut Sprite), With<Player>>,
+    mut explosion_events: EventWriter<ExplosionEvent>,
+) {
+    let (transform, mut entity, mut sprite) =  player_query.single_mut();
+    sprite.color = Color::rgba(1., 1., 1., 0.3);
+    explosion_events.send(ExplosionEvent(Transform::from_xyz(transform.translation.x, transform.translation.y, 2.)));
+    commands.entity(entity).insert(DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)));
+}
+
+fn despawn(
+    mut commands: Commands,
+    mut despawn_query: Query<(Entity), With<DespawnTimer>>
+) {
+    for entity in despawn_query.iter_mut() {
+        // commands.entity(entity).despawn_recursive();
+    }
+}
+
 fn toggle_pause(
     curr_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         if curr_state.get() == &GameState::Playing {
@@ -226,6 +264,7 @@ fn check_collision(
     mut enemy_fire_query: Query<(&Transform, &mut EnemyFire), With<EnemyFire>>,
     mut collision_events: EventWriter<CollisionEvent>,
     mut camera_shake_events: EventWriter<CameraShakeEvent>,
+    mut player_state: ResMut<NextState<PlayerState>>
 ) {
     let (player_transform, mut player, entity) = player_query.single_mut();
     for (enemy_fire_transform, fire) in enemy_fire_query.iter_mut() {
@@ -251,7 +290,9 @@ fn check_collision(
             } else {
                 player.health -= fire.power;
             }
-            //continue logic for death
         }
+    }
+    if player.health <= 0. {
+        player_state.set(PlayerState::Dead)
     }
 }
