@@ -79,7 +79,7 @@ fn setup(
         let canon_lockout = canon.lockout_time;
         let mut animation_timer = AnimationTimer(Timer::from_seconds(CANON_ANIMATION_SPEED, TimerMode::Repeating));
         animation_timer.0.pause();
-        let left = commands.spawn((
+        commands.spawn((
             SpriteSheetBundle {
                 texture: texture,
                 atlas: TextureAtlas {
@@ -93,7 +93,7 @@ fn setup(
             animation_indices,
             ShootTimer(Timer::from_seconds(canon_lockout, TimerMode::Once)),
             animation_timer,
-        )).id();
+        ));
     }
     if player.right_weapon == WeaponType::PlasmaCanon {
         let texture = asset_server.load("cannon.png");
