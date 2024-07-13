@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{basic_enemy::BasicEnemy, basic_enemy_move_patterns::EnemyMovePattern};
+use crate::{basic_enemy::BasicEnemy, basic_enemy_move_patterns::EnemyMovePattern, enemy_core::{EnemyCore, EnemyCoreBuilder, EnemyCoreBundle, EnemyType, SpawnEnemyEvent}};
 
 pub struct LevelPlugin;
 impl Plugin for LevelPlugin {
@@ -83,17 +83,21 @@ fn check_wave_complete(
 }
 
 
-fn wave_one(mut commands: Commands, asset_server: Res<AssetServer>, mut next_wave_state: ResMut<NextState<WaveState>>) {
+fn wave_one(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>, 
+    mut next_wave_state: ResMut<NextState<WaveState>>,
+    mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
+) {
     next_wave_state.set(WaveState::Active); //could schedule this
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(0., 300., 0.),
-            ..default()
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder().direction(1., 0.).build()
         },
-        BasicEnemy::new(EnemyMovePattern::Basic),
+        EnemyType::Basic,
+        Transform::from_xyz(0., 300., 0.),
         Wave::One,
-    ));
+    )));
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("enemy_test.png"),
@@ -113,17 +117,30 @@ fn wave_one(mut commands: Commands, asset_server: Res<AssetServer>, mut next_wav
         Wave::One,
     ));
 }
-fn wave_two (mut commands: Commands, asset_server: Res<AssetServer>, mut next_wave_state: ResMut<NextState<WaveState>>) {
+fn wave_two (
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>, 
+    mut next_wave_state: ResMut<NextState<WaveState>>,
+    mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
+) {
     next_wave_state.set(WaveState::Active); //could schedule this
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(0., 300., 0.),
-            ..default()
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(0., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::Two,
+    // ));
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder().direction(1., 0.).build()
         },
-        BasicEnemy::new(EnemyMovePattern::Basic),
+        EnemyType::Basic,
+        Transform::from_xyz(0., 300., 0.),
         Wave::Two,
-    ));
+    )));
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("enemy_test.png"),

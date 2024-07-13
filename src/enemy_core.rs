@@ -13,7 +13,7 @@ impl Plugin for EnemyCorePlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct EnemyCore {
     pub x_direction: f32,
     pub y_direction: f32,
@@ -22,6 +22,70 @@ pub struct EnemyCore {
     state: EnemyState,
     shoot: bool,
 }
+impl EnemyCore {
+    pub fn builder() -> EnemyCoreBuilder {
+        EnemyCoreBuilder::default()
+    }
+}
+#[derive(Default)]
+pub struct EnemyCoreBuilder {
+    pub x_direction: f32,
+    pub y_direction: f32,
+    pub health: f32,
+    move_pattern: EnemyMovePattern,
+    state: EnemyState,
+    shoot: bool,
+}
+impl EnemyCoreBuilder {
+    pub fn new() -> Self {
+        EnemyCoreBuilder {
+            x_direction: 0.,
+            y_direction: 0.,
+            health: 100.,
+            move_pattern: EnemyMovePattern::Basic,
+            state: EnemyState::Active,
+            shoot: false,
+        }
+    }
+
+    pub fn direction(mut self, x: f32, y: f32) -> Self {
+        self.x_direction = x;
+        self.y_direction = y;
+        self
+    }
+
+    pub fn health(mut self, health: f32) -> Self {
+        self.health = health;
+        self
+    }
+
+    pub fn state(mut self, state: EnemyState) -> Self {
+        self.state = state;
+        self
+    }
+
+    pub fn shoot(mut self, shoot: bool) -> Self {
+        self.shoot = shoot;
+        self
+    }
+
+    pub fn move_pattern(mut self, move_pattern: EnemyMovePattern) -> Self {
+        self.move_pattern = move_pattern;
+        self
+    }
+
+    pub fn build(self) -> EnemyCore {
+        EnemyCore {
+            x_direction: self.x_direction,
+            y_direction: self.y_direction,
+            health: self.health,
+            move_pattern: self.move_pattern,
+            state: self.state,
+            shoot: self.shoot,
+        }
+    }
+}
+
 #[derive(Bundle)]
 pub struct EnemyCoreBundle {
     pub enemy_core: EnemyCore,
@@ -51,7 +115,7 @@ pub enum EnemyType {
 #[derive(Event)]
 pub struct SpawnEnemyEvent(
     pub (
-        EnemyCore, 
+        EnemyCoreBundle, 
         EnemyType,
         Transform,
         Wave,
@@ -61,7 +125,9 @@ pub struct SpawnEnemyEvent(
 #[derive(Resource)]
 struct ShootTimer(Timer);
 
+#[derive(Clone, Default)]
 pub enum EnemyState {
+    #[default]
     Active,
     Dead,
 }
@@ -88,19 +154,19 @@ fn init_assets(
 fn spawn_enemy(
     mut commands: Commands,
     mut events: EventReader<SpawnEnemyEvent>,
-    mut enemy_handles: ResMut<EnemyHandles>,
+    enemy_handles: ResMut<EnemyHandles>,
 ) {
     if !events.is_empty() {
         for event in events.read() {
-            let (core, enemy_type, transform, wave) = &event.0;
+            let (enemy_core_bundle, enemy_type, transform, wave) = &event.0;
             let texture = get_enemy_texture(&enemy_type, enemy_handles.as_ref());
-            let mut core = core;
+            let enemy_core = enemy_core_bundle.enemy_core.clone();
             commands.spawn((
                 EnemyCoreBundle {
-                    enemy_core: core.clone()
+                    enemy_core,
                 },
                 SpriteBundle {
-                    texture: texture,
+                    texture,
                     transform: transform.clone(),
                     ..default()
                     },

@@ -2,7 +2,9 @@ use bevy::{prelude::*};
 
 use crate::basic_enemy::BasicEnemy;
 
+#[derive(Clone, Default)]
 pub enum EnemyMovePattern {
+    #[default]
     Basic,
     Down,
     StartShootGo,
