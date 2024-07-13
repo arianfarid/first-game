@@ -1,6 +1,7 @@
 use bevy::{prelude::*, window::WindowResolution};
 mod basic_enemy;
 mod basic_enemy_move_patterns;
+mod enemy_core;
 pub mod camera;
 mod canon;
 mod collision_core;
