@@ -13,14 +13,14 @@ impl Plugin for EnemyCorePlugin {
     }
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct EnemyCore {
     pub x_direction: f32,
     pub y_direction: f32,
     pub health: f32,
-    move_pattern: EnemyMovePattern,
-    state: EnemyState,
-    shoot: bool,
+    pub move_pattern: EnemyMovePattern,
+    pub state: EnemyState,
+    pub shoot: bool,
 }
 impl EnemyCore {
     pub fn builder() -> EnemyCoreBuilder {
@@ -37,14 +37,14 @@ pub struct EnemyCoreBuilder {
     shoot: bool,
 }
 impl EnemyCoreBuilder {
-    pub fn new() -> Self {
+    pub fn default() -> Self {
         EnemyCoreBuilder {
             x_direction: 0.,
             y_direction: 0.,
             health: 100.,
             move_pattern: EnemyMovePattern::Basic,
             state: EnemyState::Active,
-            shoot: false,
+            shoot: true,
         }
     }
 
@@ -123,9 +123,9 @@ pub struct SpawnEnemyEvent(
 );
 
 #[derive(Resource)]
-struct ShootTimer(Timer);
+pub struct ShootTimer(pub Timer);
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub enum EnemyState {
     #[default]
     Active,
@@ -170,7 +170,7 @@ fn spawn_enemy(
                     transform: transform.clone(),
                     ..default()
                     },
-                wave.clone()
+                Wave::to_owned(wave)
             ));
         }
     }

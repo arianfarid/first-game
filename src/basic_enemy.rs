@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, explosion_core::{ExplosionEvent}, player::Player, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, enemy_core::{EnemyCore, EnemyState, ShootTimer}, explosion_core::ExplosionEvent, level::Wave, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -52,18 +52,10 @@ impl BasicEnemy {
         self
     }
 }
-enum EnemyState {
-    Active,
-    Dead,
-}
-
-
-#[derive(Resource)]
-struct ShootTimer(Timer);
 
 fn move_enemy(
-    mut query: Query<(&mut BasicEnemy, &mut Transform, Entity)>,
-    player: Query<&Transform, (With<Player>, Without<BasicEnemy>)>,
+    mut query: Query<(&mut EnemyCore, &mut Transform, Entity)>,
+    player: Query<&Transform, (With<Player>, Without<EnemyCore>)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
@@ -115,7 +107,7 @@ fn move_enemy(
 }
 
 fn enemy_fire(
-    mut query: Query<(&mut BasicEnemy, &mut Transform)>,
+    mut query: Query<(&mut EnemyCore, &mut Transform)>,
     time: Res<Time>,
     mut timer: ResMut<ShootTimer>,
     mut commands: Commands,
@@ -156,14 +148,14 @@ fn animate_beams(
 }
 
 fn check_collision(
-    mut enemy_query: Query<(Entity, &Transform, &mut BasicEnemy), With<BasicEnemy>>,
+    mut enemy_query: Query<(&Wave, Entity, &Transform, &mut EnemyCore), With<EnemyCore>>,
     mut beam_query: Query<(Entity, &Transform, &Beam), With<Beam>>,
     mut collision_events: EventWriter<CollisionEvent>,
     mut explosion_events: EventWriter<ExplosionEvent>,
     mut commands : Commands,
 ) {
 
-    for (e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
+    for (wave, e_entity, e_transform, mut e_enemy) in enemy_query.iter_mut() {
         match e_enemy.state {
             EnemyState::Active => {
                 let ecircle = 
@@ -181,8 +173,7 @@ fn check_collision(
                 }
                 if e_enemy.health < 1. {
                     e_enemy.state = EnemyState::Dead;
-                    let mut explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
-                    // explosion_transform.scale = Vec3::new(2., 2., 2.);
+                    let explosion_transform = Transform::from_xyz(e_transform.translation.x, e_transform.translation.y, 2.);
                     explosion_events.send(ExplosionEvent(explosion_transform));
                     commands.entity(e_entity).despawn();
                 }

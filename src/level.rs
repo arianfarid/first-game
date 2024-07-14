@@ -27,6 +27,7 @@ struct WaveTimer(Timer);
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 pub enum WaveState {
     #[default]
+    Initialized,
     Active,
     Completed,
     // GameOver,
@@ -89,7 +90,6 @@ fn wave_one(
     mut next_wave_state: ResMut<NextState<WaveState>>,
     mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
 ) {
-    next_wave_state.set(WaveState::Active); //could schedule this
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
             enemy_core: EnemyCore::builder().direction(1., 0.).build()
@@ -98,24 +98,26 @@ fn wave_one(
         Transform::from_xyz(0., 300., 0.),
         Wave::One,
     )));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::One,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(-60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::One,
-    ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(60., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::One,
+    // ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(-60., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::One,
+    // ));
+    next_wave_state.set(WaveState::Active); //could schedule this
+
 }
 fn wave_two (
     mut commands: Commands, 
@@ -123,7 +125,7 @@ fn wave_two (
     mut next_wave_state: ResMut<NextState<WaveState>>,
     mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
 ) {
-    next_wave_state.set(WaveState::Active); //could schedule this
+    // next_wave_state.set(WaveState::Active); //could schedule this
     // commands.spawn((
     //     SpriteBundle {
     //         texture: asset_server.load("enemy_test.png"),
@@ -133,14 +135,14 @@ fn wave_two (
     //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::Two,
     // ));
-    spawn_enemy_event_writer.send(SpawnEnemyEvent((
-        EnemyCoreBundle {
-            enemy_core: EnemyCore::builder().direction(1., 0.).build()
-        },
-        EnemyType::Basic,
-        Transform::from_xyz(0., 300., 0.),
-        Wave::Two,
-    )));
+    // spawn_enemy_event_writer.send(SpawnEnemyEvent((
+    //     EnemyCoreBundle {
+    //         enemy_core: EnemyCore::builder().direction(1., 0.).build()
+    //     },
+    //     EnemyType::Basic,
+    //     Transform::from_xyz(0., 300., 0.),
+    //     Wave::Two,
+    // )));
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("enemy_test.png"),
