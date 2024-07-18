@@ -140,9 +140,9 @@ fn wave_two (
     // ));
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
-            enemy_core: EnemyCore::builder().direction(1., 0.).build()
+            enemy_core: EnemyCore::builder().direction(1., 0.).shoot(true).build()
         },
-        EnemyType::Basic,
+        EnemyType::EnemyB,
         Transform::from_xyz(0., 300., 0.),
         Wave::Two,
     )));
