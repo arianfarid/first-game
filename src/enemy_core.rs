@@ -161,6 +161,7 @@ fn spawn_enemy(
             let (enemy_core_bundle, enemy_type, transform, wave) = &event.0;
             let texture = get_enemy_texture(&enemy_type, enemy_handles.as_ref());
             let enemy_core = enemy_core_bundle.enemy_core.clone();
+
             commands.spawn((
                 EnemyCoreBundle {
                     enemy_core,
@@ -170,7 +171,7 @@ fn spawn_enemy(
                     transform: transform.clone(),
                     ..default()
                     },
-                Wave::to_owned(wave)
+                wave.clone()
             ));
         }
     }

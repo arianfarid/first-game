@@ -10,7 +10,7 @@ impl Plugin for LevelPlugin {
         .init_state::<WaveState>()
         .insert_resource(SpawnTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
         .add_systems(OnTransition {from: WaveState::Active, to: WaveState::Completed}, increment_state)
-        .add_systems(Update, check_wave_complete)
+        .add_systems(Update, (check_wave_complete).run_if(in_state(WaveState::Active)))
         .add_systems(OnEnter(Wave::One), wave_one)
         .add_systems(OnEnter(Wave::Two), wave_two)
         .add_systems(OnEnter(Wave::Three), wave_three)
@@ -64,12 +64,15 @@ impl Wave {
 fn increment_state(
     state: Res<State<Wave>>,
     mut next_state: ResMut<NextState<Wave>>,
+    mut next_wave_state: ResMut<NextState<WaveState>>
 ) {
     match state.get() {
         Wave::None => {},
         _ => {
             next_state.set(state.next());
             println!("STATE: {:?}", state);
+            next_wave_state.set(WaveState::Active);
+            println!("TRANSITIONED STATE");
         }
     }
 }
@@ -77,9 +80,10 @@ fn check_wave_complete(
     query: Query<&Wave>,
     mut next_wave_state: ResMut<NextState<WaveState>>
 ) {
-    //check enemy count
+    println!("COUNT: {:?}", query.iter().count());
     if query.iter().count() < 1 {
         next_wave_state.set(WaveState::Completed);
+        println!("TRANSITION STATE");
     }
 }
 
@@ -90,6 +94,7 @@ fn wave_one(
     mut next_wave_state: ResMut<NextState<WaveState>>,
     mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
 ) {
+    next_wave_state.set(WaveState::Active); 
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
             enemy_core: EnemyCore::builder().direction(1., 0.).build()
@@ -116,7 +121,6 @@ fn wave_one(
     //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::One,
     // ));
-    next_wave_state.set(WaveState::Active); //could schedule this
 
 }
 fn wave_two (
@@ -125,7 +129,6 @@ fn wave_two (
     mut next_wave_state: ResMut<NextState<WaveState>>,
     mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
 ) {
-    // next_wave_state.set(WaveState::Active); //could schedule this
     // commands.spawn((
     //     SpriteBundle {
     //         texture: asset_server.load("enemy_test.png"),
@@ -135,59 +138,59 @@ fn wave_two (
     //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::Two,
     // ));
-    // spawn_enemy_event_writer.send(SpawnEnemyEvent((
-    //     EnemyCoreBundle {
-    //         enemy_core: EnemyCore::builder().direction(1., 0.).build()
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder().direction(1., 0.).build()
+        },
+        EnemyType::Basic,
+        Transform::from_xyz(0., 300., 0.),
+        Wave::Two,
+    )));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(60., 300., 0.),
+    //         ..default()
     //     },
-    //     EnemyType::Basic,
-    //     Transform::from_xyz(0., 300., 0.),
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::Two,
-    // )));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::Two,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(-60., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::Two,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(120., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::Two,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(180., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::Two,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("enemy_test.png"),
-            transform: Transform::from_xyz(-120., 300., 0.),
-            ..default()
-        },
-        BasicEnemy::new(EnemyMovePattern::Basic),
-        Wave::Two,
-    ));
+    // ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(-60., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::Two,
+    // ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(120., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::Two,
+    // ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(180., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::Two,
+    // ));
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: asset_server.load("enemy_test.png"),
+    //         transform: Transform::from_xyz(-120., 300., 0.),
+    //         ..default()
+    //     },
+    //     BasicEnemy::new(EnemyMovePattern::Basic),
+    //     Wave::Two,
+    // ));
 }
 
 
