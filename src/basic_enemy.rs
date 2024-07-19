@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin}, math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume}, prelude::*};
 
-use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::Beam, collision_core::CollisionEvent, enemy_core::{EnemyCore, EnemyState, ShootTimer}, explosion_core::ExplosionEvent, level::Wave, player::Player, GameState};
+use crate::{basic_enemy_move_patterns::EnemyMovePattern, beam::{Beam, BeamType, ShootType}, collision_core::CollisionEvent, enemy_core::{EnemyCore, EnemyState, ShootTimer}, explosion_core::ExplosionEvent, level::Wave, player::Player, GameState};
 
 const ENEMY_SPEED: f32 = 400.;
 
@@ -113,28 +113,56 @@ fn enemy_fire(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    for (enemy, transform) in query.iter_mut() {
-        // Shoot every N seconds
-        if timer.0.tick(time.delta()).just_finished() {
-            commands.spawn((
-                SpriteBundle {
-                    texture: asset_server.load("beam_basic.png"),
-                    transform: Transform::from_xyz(
-                        transform.translation.x,
-                        transform.translation.y,
-                        0.),
-                    ..default()
-                },
-                BasicBeam { direction : -1.},
-                EnemyFire { power: 20. },
-            ));
+    for (mut enemy, transform) in query.iter_mut() {
+        match enemy.shoot_type.to_owned() {
+            crate::beam::ShootType::Basic => {
+                // Shoot every N seconds
+                if timer.0.tick(time.delta()).just_finished() {
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: asset_server.load("beam_basic.png"),
+                            transform: Transform::from_xyz(
+                                transform.translation.x,
+                                transform.translation.y,
+                                0.),
+                            ..default()
+                        },
+                        BasicBeam { y : -1., x: 0. },
+                        EnemyFire { power: 20. },
+                    ));
+                }
+            },
+            ShootType::TestHell(mut shoot_pattern) => {
+                if enemy.shoot_timer.0.tick(time.delta()).just_finished() {
+                    for beam in shoot_pattern.beam.iter_mut() {
+                        let texture_path = match beam.beam_type {
+                            BeamType::FireBall => {
+                                "beam_fireball.png"
+                            }
+                            _ => {
+                                "beam_basic.png"
+                            }
+                        };
+                        commands.spawn((
+                            SpriteBundle {
+                                texture: asset_server.load(texture_path),
+                                transform: Transform::from_xyz(transform.translation.x, transform.translation.y, 10.),
+                                ..Default::default()
+                            },
+                            BasicBeam {y: beam.direction.y, x: beam.direction.x },
+                            EnemyFire { power: beam.power }
+                        ));
+                    }
+                }
+            },
         }
     }
 }
 
 #[derive(Component)]
 pub struct BasicBeam {
-    direction: f32,
+    x: f32,
+    y: f32,
 }
 const BEAM_SPEED: f32 = 250.;
 fn animate_beams(
@@ -142,8 +170,10 @@ fn animate_beams(
     time: Res<Time>,
 ) {
     for (beam, mut transform) in query.iter_mut() {
-        let new_y = transform.translation.y + (beam.direction * BEAM_SPEED * time.delta_seconds());
+        let new_y = transform.translation.y + (beam.y * BEAM_SPEED * time.delta_seconds());
         transform.translation.y = new_y;
+        let new_x = transform.translation.x + (beam.x * BEAM_SPEED * time.delta_seconds());
+        transform.translation.x = new_x;
     }
 }
 

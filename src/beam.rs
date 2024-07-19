@@ -10,18 +10,33 @@ impl Plugin for BeamPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Clone, Component, Debug)]
 pub struct Beam {
+    pub beam_type: BeamType,
     pub lifetime: f32,
     pub speed: f32,
     pub direction: Vec2,
     pub power: f32,
 }
+
+#[derive(Clone, Debug, Default)]
+pub enum ShootType {
+    #[default]
+    Basic,
+    TestHell(ShootPattern)
+}
+#[derive(Clone, Debug)]
+pub struct ShootPattern {
+    pub beam: Vec<Beam>,
+    pub timer: Timer
+}
+
 impl Beam {
     pub fn new(beam_type: &BeamType, direction: Vec2) -> Beam {
         match beam_type {
             BeamType::Proton => {
                 Beam {
+                    beam_type: beam_type.clone(),
                     lifetime: 4.,
                     speed: 450.,
                     direction: direction,
@@ -30,6 +45,7 @@ impl Beam {
             }
             BeamType::Laser => {
                 Beam {
+                    beam_type: beam_type.clone(),
                     lifetime: 4.,
                     speed: 500.,
                     direction: direction,
@@ -38,6 +54,7 @@ impl Beam {
             }
             BeamType::Wave => {
                 Beam {
+                    beam_type: beam_type.clone(),
                     lifetime: 4.,
                     speed: 600.,
                     direction: direction,
@@ -46,22 +63,33 @@ impl Beam {
             }
             BeamType::PlasmaOrb => {
                 Beam {
+                    beam_type: beam_type.clone(),
                     lifetime: 4.,
                     speed: 600.,
                     direction: direction,
                     power: 50.,
                 }
             }
+            BeamType::FireBall => {
+                Beam {
+                    beam_type: beam_type.clone(),
+                    lifetime: 4.,
+                    speed: 600.,
+                    direction: direction,
+                    power: 10.,
+                }
+            }
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum BeamType {
     PlasmaOrb,
     Proton,
     Laser,
     Wave,
+    FireBall,
 }
 
 

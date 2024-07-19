@@ -100,7 +100,7 @@ struct Acceleration {
     x: f32,
     y: f32
 }
-pub const USER_SPEED: f32 = 200.0;
+pub const USER_SPEED: f32 = 300.0;
 
 fn setup(
     mut commands: Commands, 

@@ -1,6 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::{basic_enemy, basic_enemy_move_patterns::EnemyMovePattern, level::Wave};
+use crate::{basic_enemy, basic_enemy_move_patterns::EnemyMovePattern, beam::{Beam, ShootType}, level::Wave};
 
 pub struct EnemyCorePlugin;
 impl Plugin for EnemyCorePlugin {
@@ -21,6 +21,8 @@ pub struct EnemyCore {
     pub move_pattern: EnemyMovePattern,
     pub state: EnemyState,
     pub shoot: bool,
+    pub shoot_type: ShootType,
+    pub shoot_timer: ShootTimer,
 }
 impl EnemyCore {
     pub fn builder() -> EnemyCoreBuilder {
@@ -35,6 +37,8 @@ pub struct EnemyCoreBuilder {
     move_pattern: EnemyMovePattern,
     state: EnemyState,
     shoot: bool,
+    shoot_type: ShootType,
+    shoot_timer: ShootTimer,
 }
 impl EnemyCoreBuilder {
     pub fn default() -> Self {
@@ -45,6 +49,8 @@ impl EnemyCoreBuilder {
             move_pattern: EnemyMovePattern::Basic,
             state: EnemyState::Active,
             shoot: true,
+            shoot_type: ShootType::Basic,
+            shoot_timer: ShootTimer(Timer::from_seconds(0.3, TimerMode::Repeating)),
         }
     }
 
@@ -69,6 +75,16 @@ impl EnemyCoreBuilder {
         self
     }
 
+    pub fn shoot_type(mut self, shoot_type: ShootType) -> Self {
+        self.shoot_type = shoot_type;
+        self
+    }
+
+    pub fn shoot_timer(mut self, shoot_timer: ShootTimer) -> Self {
+        self.shoot_timer = shoot_timer;
+        self
+    }
+
     pub fn move_pattern(mut self, move_pattern: EnemyMovePattern) -> Self {
         self.move_pattern = move_pattern;
         self
@@ -82,6 +98,8 @@ impl EnemyCoreBuilder {
             move_pattern: self.move_pattern,
             state: self.state,
             shoot: self.shoot,
+            shoot_type: self.shoot_type,
+            shoot_timer: self.shoot_timer,
         }
     }
 }
@@ -100,6 +118,8 @@ impl Default for EnemyCoreBundle {
             move_pattern: EnemyMovePattern::Basic,
             state: EnemyState::Active,
             shoot: false,
+            shoot_type: ShootType::Basic,
+            shoot_timer: ShootTimer(Timer::from_seconds(0.3, TimerMode::Repeating))
             }
         }
     }
@@ -122,7 +142,7 @@ pub struct SpawnEnemyEvent(
     )
 );
 
-#[derive(Resource)]
+#[derive(Clone, Default, Debug, Resource)]
 pub struct ShootTimer(pub Timer);
 
 #[derive(Clone, Debug, Default)]

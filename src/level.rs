@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{basic_enemy::BasicEnemy, basic_enemy_move_patterns::EnemyMovePattern, enemy_core::{EnemyCore, EnemyCoreBuilder, EnemyCoreBundle, EnemyType, SpawnEnemyEvent}};
+use crate::{basic_enemy::BasicEnemy, basic_enemy_move_patterns::EnemyMovePattern, beam::{Beam, BeamType, ShootPattern, ShootType}, canon::ShootTimer, enemy_core::{EnemyCore, EnemyCoreBuilder, EnemyCoreBundle, EnemyType, SpawnEnemyEvent}};
 
 pub struct LevelPlugin;
 impl Plugin for LevelPlugin {
@@ -70,9 +70,7 @@ fn increment_state(
         Wave::None => {},
         _ => {
             next_state.set(state.next());
-            println!("STATE: {:?}", state);
             next_wave_state.set(WaveState::Active);
-            println!("TRANSITIONED STATE");
         }
     }
 }
@@ -80,10 +78,8 @@ fn check_wave_complete(
     query: Query<&Wave>,
     mut next_wave_state: ResMut<NextState<WaveState>>
 ) {
-    println!("COUNT: {:?}", query.iter().count());
     if query.iter().count() < 1 {
         next_wave_state.set(WaveState::Completed);
-        println!("TRANSITION STATE");
     }
 }
 
@@ -138,9 +134,31 @@ fn wave_two (
     //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::Two,
     // ));
+    let shoot_pat = 
+        ShootPattern { 
+            beam: vec![
+                Beam::new(&BeamType::FireBall, Vec2::new(1., -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.9, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.8, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.7, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.6, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.5, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.4, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.3, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.2, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.1, -1.)),
+                Beam::new(&BeamType::FireBall, Vec2::new(0.0, -1.)),
+            ],
+            timer: Timer::from_seconds(0.25, TimerMode::Repeating)
+        };
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
-            enemy_core: EnemyCore::builder().direction(1., 0.).shoot(true).build()
+            enemy_core: EnemyCore::builder()
+                            .direction(1., 0.)
+                            .shoot(true)
+                            .shoot_type(ShootType::TestHell(shoot_pat))
+                            .shoot_timer(crate::enemy_core::ShootTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
+                            .build()
         },
         EnemyType::EnemyB,
         Transform::from_xyz(0., 300., 0.),

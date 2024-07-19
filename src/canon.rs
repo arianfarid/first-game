@@ -50,7 +50,7 @@ impl Canon {
     }
 }
 #[derive(Component, Resource)]
-pub struct ShootTimer(Timer);
+pub struct ShootTimer(pub Timer);
 
 const CANON_ANIMATION_SPEED: f32 = 0.03;
 const CANON_DISTANCE: f32 = 20.;
