@@ -130,6 +130,7 @@ pub enum EnemyType {
     #[default]
     Basic,
     EnemyB,
+    GhostOrchid,
 }
 
 #[derive(Event)]
@@ -155,6 +156,7 @@ pub enum EnemyState {
 pub struct EnemyHandles {
     basic_enemy: Handle<Image>,
     enemy_b: Handle<Image>,
+    ghost_orchid: Handle<Image>,
 }
 
 fn init_assets(
@@ -163,10 +165,12 @@ fn init_assets(
 ) {
     let basic_enemy = asset_server.load("enemy_test.png");
     let enemy_b = asset_server.load("enemy_b.png");
+    let ghost_orchid = asset_server.load("ghost_orchid.png");
     commands.insert_resource(
         EnemyHandles {
-            basic_enemy: basic_enemy,
-            enemy_b: enemy_b,
+            basic_enemy,
+            enemy_b,
+            ghost_orchid,
         }
     );
 }
@@ -204,5 +208,6 @@ fn get_enemy_texture(
     match enemy_type {
         EnemyType::Basic => enemy_handles.basic_enemy.clone(),
         EnemyType::EnemyB => enemy_handles.enemy_b.clone(),
+        EnemyType::GhostOrchid => enemy_handles.ghost_orchid.clone(),
     }
 }

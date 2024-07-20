@@ -127,7 +127,7 @@ fn enemy_fire(
                                 0.),
                             ..default()
                         },
-                        BasicBeam { y : -1., x: 0. },
+                        BasicBeam {speed: BEAM_SPEED,  y : -1., x: 0. },
                         EnemyFire { power: 20. },
                     ));
                 }
@@ -149,7 +149,7 @@ fn enemy_fire(
                                 transform: Transform::from_xyz(transform.translation.x, transform.translation.y, 10.),
                                 ..Default::default()
                             },
-                            BasicBeam {y: beam.direction.y, x: beam.direction.x },
+                            BasicBeam {speed: beam.speed, y: beam.direction.y, x: beam.direction.x },
                             EnemyFire { power: beam.power }
                         ));
                     }
@@ -163,16 +163,17 @@ fn enemy_fire(
 pub struct BasicBeam {
     x: f32,
     y: f32,
+    speed: f32,
 }
-const BEAM_SPEED: f32 = 250.;
+pub const BEAM_SPEED: f32 = 250.;
 fn animate_beams(
     mut query: Query<(&mut BasicBeam, &mut Transform)>,
     time: Res<Time>,
 ) {
     for (beam, mut transform) in query.iter_mut() {
-        let new_y = transform.translation.y + (beam.y * BEAM_SPEED * time.delta_seconds());
+        let new_y = transform.translation.y + (beam.y * beam.speed * time.delta_seconds());
         transform.translation.y = new_y;
-        let new_x = transform.translation.x + (beam.x * BEAM_SPEED * time.delta_seconds());
+        let new_x = transform.translation.x + (beam.x * beam.speed * time.delta_seconds());
         transform.translation.x = new_x;
     }
 }

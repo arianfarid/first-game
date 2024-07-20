@@ -9,6 +9,7 @@ pub mod explosion_core;
 pub mod player;
 mod level;
 pub mod beam;
+pub mod shoot_patterns;
 mod level_background;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]

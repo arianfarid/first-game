@@ -1,6 +1,8 @@
 use bevy::prelude::*;
+use flat_spray::FlatSpray;
+use line_spray::LineSpray;
 
-use crate::GameState;
+use crate::{basic_enemy::BEAM_SPEED, shoot_patterns::*, GameState};
 
 pub struct BeamPlugin;
 impl Plugin for BeamPlugin {
@@ -30,6 +32,14 @@ pub struct ShootPattern {
     pub beam: Vec<Beam>,
     pub timer: Timer
 }
+impl ShootPattern {
+    pub fn flat_spray() -> ShootPattern {
+        FlatSpray::new()
+    }
+    pub fn line_spray() -> ShootPattern {
+        LineSpray::new()
+    }
+}
 
 impl Beam {
     pub fn new(beam_type: &BeamType, direction: Vec2) -> Beam {
@@ -38,7 +48,7 @@ impl Beam {
                 Beam {
                     beam_type: beam_type.clone(),
                     lifetime: 4.,
-                    speed: 450.,
+                    speed: BEAM_SPEED,
                     direction: direction,
                     power: 20.,
                 }
@@ -47,7 +57,7 @@ impl Beam {
                 Beam {
                     beam_type: beam_type.clone(),
                     lifetime: 4.,
-                    speed: 500.,
+                    speed: BEAM_SPEED,
                     direction: direction,
                     power: 30.,
                 }
@@ -56,7 +66,7 @@ impl Beam {
                 Beam {
                     beam_type: beam_type.clone(),
                     lifetime: 4.,
-                    speed: 600.,
+                    speed: BEAM_SPEED + 300.,
                     direction: direction,
                     power: 50.,
                 }
@@ -65,7 +75,7 @@ impl Beam {
                 Beam {
                     beam_type: beam_type.clone(),
                     lifetime: 4.,
-                    speed: 600.,
+                    speed: BEAM_SPEED,
                     direction: direction,
                     power: 50.,
                 }
@@ -80,6 +90,11 @@ impl Beam {
                 }
             }
         }
+    }
+
+    pub fn speed(mut self, speed: f32) -> Self {
+        self.speed = speed;
+        self
     }
 }
 

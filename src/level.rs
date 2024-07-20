@@ -134,23 +134,7 @@ fn wave_two (
     //     BasicEnemy::new(EnemyMovePattern::Basic),
     //     Wave::Two,
     // ));
-    let shoot_pat = 
-        ShootPattern { 
-            beam: vec![
-                Beam::new(&BeamType::FireBall, Vec2::new(1., -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.9, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.8, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.7, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.6, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.5, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.4, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.3, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.2, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.1, -1.)),
-                Beam::new(&BeamType::FireBall, Vec2::new(0.0, -1.)),
-            ],
-            timer: Timer::from_seconds(0.25, TimerMode::Repeating)
-        };
+    let shoot_pat =  ShootPattern::flat_spray();
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
             enemy_core: EnemyCore::builder()
@@ -162,6 +146,20 @@ fn wave_two (
         },
         EnemyType::EnemyB,
         Transform::from_xyz(0., 300., 0.),
+        Wave::Two,
+    )));
+
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder()
+                            .direction(1., 0.)
+                            .shoot(true)
+                            .shoot_type(ShootType::TestHell(ShootPattern::line_spray()))
+                            .shoot_timer(crate::enemy_core::ShootTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
+                            .build()
+        },
+        EnemyType::EnemyB,
+        Transform::from_xyz(300., 300., 0.),
         Wave::Two,
     )));
     // commands.spawn((
