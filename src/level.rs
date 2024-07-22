@@ -95,7 +95,7 @@ fn wave_one(
         EnemyCoreBundle {
             enemy_core: EnemyCore::builder().direction(1., 0.).build()
         },
-        EnemyType::Basic,
+        EnemyType::RoseGunner,
         Transform::from_xyz(0., 300., 0.),
         Wave::One,
     )));
