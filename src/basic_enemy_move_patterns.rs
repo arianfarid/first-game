@@ -7,6 +7,7 @@ pub enum EnemyMovePattern {
     #[default]
     Basic,
     Down,
+    EnterShoot,
     StartShootGo,
 }
 

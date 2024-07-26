@@ -98,6 +98,13 @@ fn move_enemy(
             }
             EnemyMovePattern::StartShootGo => {
 
+            },
+            EnemyMovePattern::EnterShoot => {
+                if transform.translation.y > 200. {
+                    enemy.x_direction = -1.;
+                    let new_y_pos = transform.translation.y + (ENEMY_SPEED * enemy.y_direction) * time.delta_seconds();
+                    transform.translation.y = new_y_pos;
+                }
             }
         }
 

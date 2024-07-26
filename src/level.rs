@@ -93,9 +93,13 @@ fn wave_one(
     next_wave_state.set(WaveState::Active); 
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
-            enemy_core: EnemyCore::builder().direction(1., 0.).build()
+            enemy_core: EnemyCore::builder()
+                .direction(1., 0.)
+                .shoot(true)
+                .shoot_type(ShootType::Basic)
+                .build()
         },
-        EnemyType::RoseGunner,
+        EnemyType::Basic,
         Transform::from_xyz(0., 300., 0.),
         Wave::One,
     )));
@@ -138,6 +142,7 @@ fn wave_two (
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
             enemy_core: EnemyCore::builder()
+                            .move_pattern(EnemyMovePattern::EnterShoot)
                             .direction(1., 0.)
                             .shoot(true)
                             .shoot_type(ShootType::TestHell(shoot_pat))
@@ -145,7 +150,7 @@ fn wave_two (
                             .build()
         },
         EnemyType::EnemyB,
-        Transform::from_xyz(0., 300., 0.),
+        Transform::from_xyz(0., 500., 0.),
         Wave::Two,
     )));
 

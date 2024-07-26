@@ -84,7 +84,7 @@ pub struct WaveGun {
 impl WaveGun {
     fn new() -> Self {
         WaveGun {
-            lockout_time: 0.05,
+            lockout_time: 0.01,
         }
     }
 }
