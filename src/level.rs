@@ -100,28 +100,33 @@ fn wave_one(
                 .build()
         },
         EnemyType::Basic,
+        Transform::from_xyz(60., 300., 0.),
+        Wave::One,
+    )));
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder()
+                .direction(1., 0.)
+                .shoot(true)
+                .shoot_type(ShootType::Basic)
+                .build()
+        },
+        EnemyType::Basic,
         Transform::from_xyz(0., 300., 0.),
         Wave::One,
     )));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(60., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::One,
-    // ));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(-60., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::One,
-    // ));
-
+    spawn_enemy_event_writer.send(SpawnEnemyEvent((
+        EnemyCoreBundle {
+            enemy_core: EnemyCore::builder()
+                .direction(1., 0.)
+                .shoot(true)
+                .shoot_type(ShootType::Basic)
+                .build()
+        },
+        EnemyType::Basic,
+        Transform::from_xyz(-60., 300., 0.),
+        Wave::One,
+    )));
 }
 fn wave_two (
     mut commands: Commands, 
