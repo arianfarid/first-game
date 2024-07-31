@@ -129,20 +129,8 @@ fn wave_one(
     )));
 }
 fn wave_two (
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>, 
-    mut next_wave_state: ResMut<NextState<WaveState>>,
     mut spawn_enemy_event_writer: EventWriter<SpawnEnemyEvent>
 ) {
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(0., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
     let shoot_pat =  ShootPattern::flat_spray();
     spawn_enemy_event_writer.send(SpawnEnemyEvent((
         EnemyCoreBundle {
@@ -172,51 +160,6 @@ fn wave_two (
         Transform::from_xyz(300., 300., 0.),
         Wave::Two,
     )));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(60., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(-60., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(120., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(180., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("enemy_test.png"),
-    //         transform: Transform::from_xyz(-120., 300., 0.),
-    //         ..default()
-    //     },
-    //     BasicEnemy::new(EnemyMovePattern::Basic),
-    //     Wave::Two,
-    // ));
 }
 
 
